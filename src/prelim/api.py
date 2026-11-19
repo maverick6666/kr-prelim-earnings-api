@@ -80,6 +80,10 @@ class Store:
         out = _row(f, ["surprise_label", "surprise_pct", "surprise_hold_reason", "consensus_krw",
                        "consensus_published_at", "consensus_age_days", "consensus_source", "consensus_sentence"])
         out["basis"] = "영업이익 · 첫 공시 전에 나온 기사 속 시장 예상치(에프앤가이드 등 인용)"
+        # 예상치가 작으면 % 가 터진다(예상 1,199억 · 실제 −1조 7,334억 → −1545.7%). 금액 차이를 함께 준다.
+        actual = (self.headline(f["rcept_no"]).get("operating_income") or {}).get("current_krw")
+        out["actual_krw"] = actual
+        out["gap_krw"] = None if actual is None else actual - out["consensus_krw"]
         return out
 
     def metric_rows(self, rcept_no: str) -> list[dict]:

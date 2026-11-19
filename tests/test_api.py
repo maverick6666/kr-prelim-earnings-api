@@ -66,6 +66,7 @@ def test_filing_detail_has_numbers_evidence_versions_and_surprise(client):
     assert body["metrics"][0]["evidence"].startswith("영업이익")
     assert [v["version_kind"] for v in body["versions"]] == ["initial", "repeat", "correction"]
     assert body["surprise"]["surprise_label"] == "어닝 서프라이즈"
+    assert body["surprise"]["gap_krw"] == 10.4e12 - 8.2e12  # 실제 − 예상(원)
     assert body["dart_url"].endswith("20240705800058")
 
 

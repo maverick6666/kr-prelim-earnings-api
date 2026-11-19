@@ -185,9 +185,12 @@ function tile(key, h) {
 function surpriseCard(s) {
   if (!s) return `<div class="src">이 공시에는 시장 예상치가 없습니다(기사에서 뽑은 예상치가 있는 회사 · 분기만 판정).</div>`;
   const label = s.surprise_label || `판정 보류 — ${s.surprise_hold_reason}`;
+  // 금액 차이를 크게, % 는 작게: 예상치가 작거나 부호가 바뀌면 % 는 −1545% 처럼 읽기 어렵다
+  const gap = s.gap_krw === null || s.gap_krw === undefined ? null : s.gap_krw;
+  const gapText = gap === null ? pct(s.surprise_pct) : `${gap > 0 ? "+" : ""}${krw(gap)}`;
   return `<div class="surprise-card"><div><div class="k">영업이익 · 시장 예상치 대비</div>
-      <div class="big">${pct(s.surprise_pct)}</div>${surpriseBadge(s) || `<span class="badge warn">${label}</span>`}
-      <div class="cmp">예상 ${krw(s.consensus_krw)}<br>기사 ${String(s.consensus_published_at || "").slice(0, 10)}
+      <div class="big">${gapText}</div>${surpriseBadge(s) || `<span class="badge warn">${label}</span>`}
+      <div class="cmp">실제 ${krw(s.actual_krw)} · 예상 ${krw(s.consensus_krw)}<br>기사 ${String(s.consensus_published_at || "").slice(0, 10)}
       (공시 ${s.consensus_age_days}일 전)</div></div>
       <div><blockquote>${s.consensus_sentence || ""}</blockquote>
       <div class="src">출처 ${s.consensus_source} · ${s.basis}</div></div></div>`;

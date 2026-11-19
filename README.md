@@ -11,7 +11,7 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?logo=fastapi&logoColor=white)
 ![pandas](https://img.shields.io/badge/pandas-2.2+-150458?logo=pandas&logoColor=white)
 ![lxml](https://img.shields.io/badge/HTML-lxml-6B8E23)
-![tests](https://img.shields.io/badge/tests-102%20passed-2E9E3F)
+[![ci](https://github.com/maverick6666/kr-prelim-earnings-api/actions/workflows/ci.yml/badge.svg)](https://github.com/maverick6666/kr-prelim-earnings-api/actions/workflows/ci.yml)
 
 <img src="assets/screenshots/detail.png" alt="삼성전자 2024년 2분기 잠정실적 상세 화면" width="860"/>
 
