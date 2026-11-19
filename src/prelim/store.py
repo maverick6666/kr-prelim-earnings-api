@@ -110,8 +110,9 @@ def build_versions(filings: pd.DataFrame) -> pd.DataFrame:
             target = cands.iloc[-1]
             f.at[idx, "chain_id"] = chain_of.get(target["rcept_no"], target["chain_id"])
             chain_of[row["rcept_no"]] = f.at[idx, "chain_id"]
-            if row["period_key"] == "UNKNOWN":  # 원 공시의 기간을 물려받는다
+            if row["period_key"] == "UNKNOWN" and target["period_key"] != "UNKNOWN":  # 원 공시의 기간을 물려받는다
                 f.at[idx, "period_key"] = target["period_key"]
+                f.at[idx, "period_source"] = "inherited"
     f = f.sort_values(["chain_id", "rcept_no"])
     f["version_no"] = f.groupby("chain_id").cumcount() + 1
     f["version_kind"] = np.where(f["correction_kind"] != "INITIAL", "correction",

@@ -324,7 +324,7 @@ def find_results_tables(doc) -> list[tuple[list[list[str]], int]]:
 # ── 단위 · 기간 ─────────────────────────────────────────────────────────
 _UNIT = re.compile(r"단위\s*[:：]?\s*\(?\s*([^\s,%)/]+)")
 _DATE = r"(\d{4})[.\-년 ]\s*(\d{1,2})[.\-월 ]\s*(\d{1,2})일?"
-_DATE_RANGE = re.compile(_DATE + r"\s*[~∼-]\s*" + _DATE)
+_DATE_RANGE = re.compile(_DATE + r"\s*(?:[~∼-]|부터)\s*" + _DATE)
 
 
 def find_unit(text: str) -> str | None:
@@ -383,40 +383,143 @@ def period_from_dates(start: str, end: str) -> PeriodInfo:
     return PeriodInfo("UNKNOWN", y2, source="dates")
 
 
+# 머리글 전용 패턴. 연도는 2016 · 16 · '16 · `16 을 받고, 앞뒤가 숫자인 자리는 연도로 읽지 않는다(20163Q 방지).
+_APOS = r"['`’]?"
+_Y = r"(?<!\d)" + _APOS + r"(?P<y>\d{4}|\d{2})(?!\d)" + _APOS
+_Y2 = r"(?<!\d)" + _APOS + r"(?P<y2>\d{4}|\d{2})(?!\d)"
+_SEP = r"\s*[.\-/년]\s*"
+_RSEP = r"\s*\.?\s*일?\s*(?:[~∼\-]|부터)\s*"  # 범위 구분: '2009.2.1.~' 처럼 끝에 점이 붙기도 한다
+
+
+def _md(i: int) -> str:
+    return rf"(?P<m{i}>\d{{1,2}})\s*[.\-/월]\s*(?P<d{i}>\d{{1,2}})"
+
+
+_RANGE_FULL = re.compile(_Y + _SEP + _md(1) + _RSEP + _Y2 + _SEP + _md(2))
+# 끝 날짜에 연도가 없음: 2006.01.01~03.31 · '08.7.1~9.30 · 2004년10월1일~12월31일
+_RANGE_SHORT = re.compile(_Y + _SEP + _md(1) + _RSEP + _md(2) + r"(?![.\d])")
+# 연도 뒤 괄호 안 범위: 2019년 (1.1~12.31)
+_RANGE_YEAR_FIRST = re.compile(_Y + r"\s*년?\s*\(\s*" + _md(1) + _RSEP + _md(2))
+# 월 범위: 13.4월~6월 · 2015.01~03 · 21.01~21.03
+_RANGE_MONTHS = re.compile(_Y + _SEP + r"(?P<m1>\d{1,2})\s*월?\s*[~∼\-]\s*(?:" + _Y2 + _SEP + r")?"
+                           r"(?P<m2>\d{1,2})\s*월?(?![.\d])")
+_YEAR_THEN = r"\s*(?:년\s*(?:도\s*)?|[.\s])?\s*"
 _LABEL_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
-    ("MONTHLY", re.compile(r"(\d{2,4})\s*년\s*(\d{1,2})\s*월")),
-    ("QUARTER", re.compile(r"'?(\d{2})\s*\.\s*([1-4])\s*Q", re.I)),
-    ("QUARTER", re.compile(r"(\d{4})\s*\.?\s*([1-4])\s*Q", re.I)),
-    ("QUARTER", re.compile(r"(\d{2,4})\s*년\s*(?:도\s*)?([1-4])\s*(?:/\s*4)?\s*분기")),
-    ("HALF", re.compile(r"(\d{2,4})\s*년\s*(?:도\s*)?(?:상반기|반기)")),
-    ("ANNUAL", re.compile(r"(\d{2,4})\s*년\s*(?:도\s*)?(?:연간|년간|결산|전체)")),
+    # 연도 → 분기: '26.1Q · 2016.3Q · 2016년 3Q · 17년3Q · '13 3Q · '21.1분기 · 16년 1/4분기 · '08.2/4 · 2016년 제3분기
+    ("QUARTER", re.compile(_Y + _YEAR_THEN + r"(?:제\s*)?(?P<q>[1-4])\s*(?:/\s*4(?:\s*분기)?|Q|분기?)", re.I)),
+    ("QUARTER", re.compile(_Y + _YEAR_THEN + r"Q\s*(?P<q>[1-4])(?!\d)", re.I)),  # '25.Q1
+    ("QUARTER", re.compile(r"(?<!\d)(?P<q>[1-4])\s*Q\s*" + _APOS + r"(?P<y>\d{4}|\d{2})(?!\d)", re.I)),  # 1Q24
+    ("QUARTER", re.compile(r"(?<!\d)(?P<y>\d{4}|\d{2})(?P<q>[1-4])Q", re.I)),  # 20193Q · 091Q
+    # 월: 16년 4월 · 18.6월 · 2005.2월 · '14.11월
+    ("MONTHLY", re.compile(_Y + r"\s*[.년]\s*(?P<m>\d{1,2})\s*월")),
+    ("HALF", re.compile(_Y + _YEAR_THEN + r"(?:상반기|전반기|반기)")),
+    ("ANNUAL", re.compile(_Y + _YEAR_THEN + r"(?:연간|년간|결산|전체)")),
+    ("ANNUAL", re.compile(r"FY\s*" + _Y, re.I)),
+    ("ANNUAL", re.compile(_Y + r"\s*年")),
 ]
+# 연도 없이 분기 · 반기 · 기수만: (3분기) · (2Q) · (3/4) · (제54기 반기) · (39기). 연도는 접수일로 채운다.
+_QUARTER_ONLY = re.compile(r"(?<![\d.])(?:제\s*)?(?P<q>[1-4])\s*(?:/\s*4(?:\s*분기)?|Q|분기)(?!\s*['`]?\d)", re.I)
+_TERM_HALF = re.compile(r"제?\s*\d+\s*기\s*(?:상반기|반기)")
+_TERM = re.compile(r"제?\d+기")
+# 연 · 월만: (2009.03) · ('13.01). 월별인지 분기 말인지는 머리글만으로 모른다 → period_from_month_pair
+_BARE_MONTH = re.compile(_APOS + r"(?P<y>\d{4}|\d{2})\s*\.\s*(?P<m>\d{1,2})")
+
+
+def _ymd(y: str, m: str, d: str) -> str:
+    return f"{_year(y):04d}-{int(m):02d}-{int(d):02d}"
+
+
+def _core(label: str) -> str:
+    return re.sub(r"당기|전기|전년동기|실적|기간|[()\[\]\s]", "", label)
 
 
 def period_from_label(label: str) -> PeriodInfo:
-    """머리글의 기간 표시: ('26.1Q) · 2016.3Q · 2016년 3분기 · 16년 1/4분기 · 16년 4월 · 2016년 상반기 · 연간."""
-    m = _DATE_RANGE.search(label)
+    """머리글의 기간 표시를 읽는다.
+
+    날짜 범위(2025.01.01 ~ 2025.03.31 · 09.07.01~09.09.30 · 2006.01.01~03.31 · 2019년 (1.1~12.31) · 13.4월~6월)
+    → 연도와 분기('26.1Q · 2016년 3Q · 1Q24 · '25.Q1 · '21.1분기 · 16년 1/4분기 · 091Q) → 월(16년 4월 · 18.6월)
+    → 반기 → 연간(FY2021 · 2007年 · (2023년)) → 연도 없는 분기 · 기수 순서로 본다.
+    """
+    m = _RANGE_FULL.search(label)
     if m:
-        y1, m1, d1, y2, m2, d2 = (int(x) for x in m.groups())
-        return period_from_dates(f"{y1:04d}-{m1:02d}-{d1:02d}", f"{y2:04d}-{m2:02d}-{d2:02d}")
+        return period_from_dates(_ymd(m["y"], m["m1"], m["d1"]), _ymd(m["y2"], m["m2"], m["d2"]))
+    for pattern in (_RANGE_SHORT, _RANGE_YEAR_FIRST):
+        m = pattern.search(label)
+        if m:
+            y2 = str(_year(m["y"]) + (1 if int(m["m2"]) < int(m["m1"]) else 0))
+            return period_from_dates(_ymd(m["y"], m["m1"], m["d1"]), _ymd(y2, m["m2"], m["d2"]))
+    m = _RANGE_MONTHS.search(label)
+    if m and 1 <= int(m["m1"]) <= 12 and 1 <= int(m["m2"]) <= 12:
+        y2 = str(_year(m["y"]) + (1 if int(m["m2"]) < int(m["m1"]) else 0))
+        return period_from_dates(_ymd(m["y"], m["m1"], "1"), _ymd(y2, m["m2"], "1"))
     for kind, pattern in _LABEL_PATTERNS:
         m = pattern.search(label)
         if not m:
             continue
-        year = _year(m.group(1))
+        year = _year(m.group("y"))
         if kind == "MONTHLY":
-            return PeriodInfo(kind, year, month=int(m.group(2)), source="label")
+            month = int(m.group("m"))
+            if not 1 <= month <= 12:
+                continue
+            return PeriodInfo(kind, year, month=month, source="label")
         if kind == "QUARTER":
-            return PeriodInfo(kind, year, quarter=int(m.group(2)), source="label")
+            return PeriodInfo(kind, year, quarter=int(m.group("q")), source="label")
         return PeriodInfo(kind, year, quarter=2 if kind == "HALF" else 4, source="label")
-    # 분기 · 월 표시 없이 연도나 기수만 있으면 연간 실적: '(2023년)' · '(2023)' · '(제59기)'
-    core = re.sub(r"당기\s*(실적)?|[()\[\]\s]", "", label)
-    m = re.fullmatch(r"'?(\d{2}|\d{4})년?도?", core)
+    m = _QUARTER_ONLY.search(label)
+    if m:
+        return PeriodInfo("QUARTER", None, quarter=int(m["q"]), source="label")
+    if _TERM_HALF.search(label):
+        return PeriodInfo("HALF", None, quarter=2, source="label")
+    # 분기 · 월 표시 없이 연도나 기수만 있으면 연간 실적: '(2023년)' · '(2023)' · '당기(2003년)실적' · '(제59기)'
+    core = _core(label)
+    m = re.fullmatch(_APOS + r"(\d{2}|\d{4})년?도?", core)
     if m:
         return PeriodInfo("ANNUAL", _year(m.group(1)), quarter=4, source="label")
-    if re.fullmatch(r"제\d+기", core):
+    if _TERM.fullmatch(core):
         return PeriodInfo("ANNUAL", None, quarter=4, source="label")
     return PeriodInfo()
+
+
+def period_from_month_pair(current: str, prior: str | None) -> PeriodInfo:
+    """'(2009.03)' 처럼 연 · 월만 적힌 머리글. 전기 머리글과의 간격으로 월별(1달)인지 분기(3달)인지 정한다.
+
+    전기 머리글이 없거나 간격이 1 · 3달이 아니면 정하지 않는다(월별 공시를 분기로 잘못 묶지 않기 위해).
+    """
+    cur = _BARE_MONTH.fullmatch(_core(current))
+    pri = _BARE_MONTH.fullmatch(_core(prior)) if prior else None
+    if not cur or not pri:
+        return PeriodInfo()
+    y, mo = _year(cur["y"]), int(cur["m"])
+    gap = (y - _year(pri["y"])) * 12 + mo - int(pri["m"])
+    if not 1 <= mo <= 12:
+        return PeriodInfo()
+    if gap == 1:
+        return PeriodInfo("MONTHLY", y, month=mo, source="label_pair")
+    if gap == 3 and mo % 3 == 0:
+        return PeriodInfo("QUARTER", y, quarter=mo // 3, source="label_pair")
+    return PeriodInfo()
+
+
+def fill_year_from_receipt(period: PeriodInfo, receipt_ymd: str) -> PeriodInfo:
+    """기간 종류는 읽었는데 연도가 없을 때('(3분기)' · '(2Q)' · '(제59기)') 접수일로 연도를 채운다.
+
+    잠정실적은 기간이 끝난 뒤에 낸다. 그래서 기간이 끝나는 달이 접수한 달보다 앞이면 접수 연도, 아니면 그 전 해다.
+    연간(기수만 표시)은 결산월을 모르므로 1~4월 접수(12월 결산이 거의 확실)일 때만 채운다.
+    채우면 source 에 '+receipt' 를 붙여, 원문에서 읽은 연도가 아님을 남긴다.
+    """
+    if period.year is not None or period.kind == "UNKNOWN":
+        return period
+    year, month = int(receipt_ymd[:4]), int(receipt_ymd[4:6])
+    if period.kind == "ANNUAL":
+        if month > 4:
+            return period
+        end_month = 12
+    elif period.kind == "MONTHLY":
+        end_month = period.month or 12
+    else:
+        end_month = 3 * (period.quarter or 4)
+    filled = year if end_month < month else year - 1
+    return PeriodInfo(period.kind, filled, period.quarter, period.month, source=period.source + "+receipt")
 
 
 def normalize_annual(rows: list[MetricRow]) -> int:
@@ -434,17 +537,42 @@ def normalize_annual(rows: list[MetricRow]) -> int:
     return moved
 
 
+# 본문에서 당기 기간을 적는 자리. 띄어 쓴 '해당 기간' · '당 기 :' 도 있다. '당기순이익' 은 기간 자리가 아니다.
+_CURRENT_ANCHORS = (re.compile(r"당\s*기\s*실\s*적"), re.compile(r"해\s*당\s*기\s*간"), re.compile(r"당\s*기(?!\s*순)"))
+# 기간 '항목' 자리: 뒤에 쌍점이 붙은 것만 본다(본문 설명 속 날짜를 기간으로 읽지 않기 위해)
+_CURRENT_FIELDS = (re.compile(r"해\s*당\s*기\s*간\s*[:：]?"), re.compile(r"당\s*기\s*(?:실\s*적\s*)?[:：]"))
+_NEXT_PART = re.compile(r"전\s*기|전\s*년\s*동\s*기")
+
+
+def _windows_after(text: str, anchors, limit: int = 20):
+    """앵커 뒤 80자. '전기' · '전년동기' 가 나오면 거기서 자른다(전기 기간을 당기로 읽지 않기 위해)."""
+    for anchor in anchors:
+        for n, m in enumerate(anchor.finditer(text)):
+            if n >= limit:
+                break
+            window = text[m.end(): m.end() + 80]
+            cut = _NEXT_PART.search(window)
+            yield window[: cut.start()] if cut else window
+
+
 def find_current_period(text: str) -> tuple[str, str] | None:
-    """'실적기간 당기실적 2026-01-01 ~ 2026-03-31' 이나 '해당기간 : 2010.1.1~2010.3.31' 에서 당기 기간."""
-    for anchor in ("당기실적", "해당기간", "당기"):
-        i = text.find(anchor)
-        if i < 0:
-            continue
-        m = _DATE_RANGE.search(text, i, i + 80)
+    """'실적기간 당기실적 2026-01-01 ~ 2026-03-31' · '해당기간 : 2010.1.1~2010.3.31' ·
+    '당 기 : 2012년 1월 1일부터 2012년 3월 31일까지' 에서 당기 기간."""
+    for window in _windows_after(text, _CURRENT_ANCHORS):
+        m = _DATE_RANGE.search(window)
         if m:
             y1, m1, d1, y2, m2, d2 = (int(x) for x in m.groups())
             return f"{y1:04d}-{m1:02d}-{d1:02d}", f"{y2:04d}-{m2:02d}-{d2:02d}"
     return None
+
+
+def period_from_text(text: str) -> PeriodInfo:
+    """본문 기간 항목에 날짜 대신 '당 기: 2008년 1분기' · '당기 : '10.1.1~'10.3.31' 처럼 적힌 경우."""
+    for window in _windows_after(text, _CURRENT_FIELDS):
+        p = period_from_label(window)
+        if p.kind != "UNKNOWN":
+            return PeriodInfo(p.kind, p.year, p.quarter, p.month, source="text")
+    return PeriodInfo()
 
 
 # ── 한 건 파싱 ──────────────────────────────────────────────────────────
@@ -498,6 +626,17 @@ def parse_html(rcept_no: str, html: str, encoding: str = "") -> ParsedFiling:
         out.period = period_from_dates(*out.period_current)
     if out.period.kind == "UNKNOWN" and "CURRENT" in out.period_labels:
         out.period = period_from_label(out.period_labels["CURRENT"])
+        if out.period.kind == "UNKNOWN":
+            out.period = period_from_month_pair(out.period_labels["CURRENT"], out.period_labels.get("PRIOR_PERIOD"))
+    if out.period.kind == "UNKNOWN":
+        out.period = period_from_text(text)
+    if len(rcept_no) >= 8 and rcept_no[:8].isdigit():  # 접수번호 앞 8자리 = 접수일
+        receipt_year = int(rcept_no[:4])
+        if out.period.year is not None and not receipt_year - 2 <= out.period.year <= receipt_year:
+            # '(43)' 같은 기수나 '(25 1Q)' 같은 오기: 원문 연도를 버리고 접수일로 채운다
+            out.notes.append(f"머리글 연도 {out.period.year} 가 접수일({rcept_no[:8]})과 맞지 않아 접수일로 채움")
+            out.period = PeriodInfo(out.period.kind, None, out.period.quarter, out.period.month, out.period.source)
+        out.period = fill_year_from_receipt(out.period, rcept_no[:8])
 
     value_cols = sorted(roles)
     first_value_col = value_cols[0] if value_cols else 2

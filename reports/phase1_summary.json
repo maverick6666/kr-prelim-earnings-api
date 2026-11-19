@@ -122,28 +122,28 @@
  },
  "self_check_by_type_2008plus": {
   "chk_yoy_pct": {
-   "PASS": 226705,
-   "NA": 64092,
-   "PASS_CONVENTION": 1062,
-   "FAIL": 740,
-   "NEAR": 484
+   "PASS": 227091,
+   "NA": 63690,
+   "PASS_CONVENTION": 1073,
+   "FAIL": 741,
+   "NEAR": 488
   },
   "chk_qoq_pct": {
-   "NA": 177742,
-   "PASS": 114094,
-   "PASS_CONVENTION": 558,
-   "FAIL": 425,
-   "NEAR": 264
+   "NA": 178144,
+   "PASS": 113708,
+   "PASS_CONVENTION": 547,
+   "FAIL": 424,
+   "NEAR": 260
   },
   "chk_yoy_change": {
-   "NA": 197274,
-   "PASS": 95201,
+   "NA": 197111,
+   "PASS": 95364,
    "FAIL": 526,
    "PASS_CONVENTION": 82
   },
   "chk_qoq_change": {
-   "NA": 245763,
-   "PASS": 47025,
+   "NA": 245926,
+   "PASS": 46862,
    "FAIL": 238,
    "PASS_CONVENTION": 57
   }
@@ -156,12 +156,12 @@
  "final_crosscheck": {
   "prior_year_vs_final": {
    "NET_INCOME/CUMULATIVE": {
-    "EXACT_0.5%": 15396,
-    "NO_FINAL": 13593,
-    "NO_PRELIM": 5567,
+    "EXACT_0.5%": 15406,
+    "NO_FINAL": 13607,
+    "NO_PRELIM": 5542,
     "WITHIN_5%": 161,
-    "FAR": 132,
-    "WITHIN_30%": 105,
+    "FAR": 134,
+    "WITHIN_30%": 104,
     "SCOPE_MISMATCH": 32,
     "SIGN_FLIP": 10,
     "UNIT_LIKE_10^2": 4,
@@ -173,14 +173,14 @@
     "UNIT_LIKE_10^-3": 1
    },
    "NET_INCOME/PERIOD": {
-    "NO_FINAL": 18508,
-    "EXACT_0.5%": 12548,
-    "NO_PRELIM": 7200,
-    "WITHIN_5%": 188,
-    "FAR": 96,
-    "WITHIN_30%": 74,
+    "NO_FINAL": 18613,
+    "EXACT_0.5%": 12578,
+    "NO_PRELIM": 7064,
+    "WITHIN_5%": 189,
+    "FAR": 95,
+    "WITHIN_30%": 76,
     "SCOPE_MISMATCH": 24,
-    "SIGN_FLIP": 12,
+    "SIGN_FLIP": 11,
     "UNIT_LIKE_10^-2": 4,
     "UNIT_LIKE_10^6": 1,
     "UNIT_LIKE_10^-6": 1,
@@ -188,11 +188,11 @@
     "UNIT_LIKE_10^-3": 1
    },
    "OPERATING_INCOME/CUMULATIVE": {
-    "EXACT_0.5%": 16228,
-    "NO_FINAL": 14180,
-    "NO_PRELIM": 4099,
-    "WITHIN_5%": 199,
-    "FAR": 147,
+    "EXACT_0.5%": 16241,
+    "NO_FINAL": 14194,
+    "NO_PRELIM": 4073,
+    "WITHIN_5%": 200,
+    "FAR": 145,
     "WITHIN_30%": 92,
     "SCOPE_MISMATCH": 24,
     "SIGN_FLIP": 16,
@@ -205,12 +205,12 @@
     "UNIT_LIKE_10^-3": 1
    },
    "OPERATING_INCOME/PERIOD": {
-    "NO_FINAL": 19407,
-    "EXACT_0.5%": 13259,
-    "NO_PRELIM": 5627,
-    "WITHIN_5%": 210,
+    "NO_FINAL": 19517,
+    "EXACT_0.5%": 13290,
+    "NO_PRELIM": 5486,
+    "WITHIN_5%": 211,
     "FAR": 120,
-    "WITHIN_30%": 68,
+    "WITHIN_30%": 67,
     "SIGN_FLIP": 17,
     "SCOPE_MISMATCH": 17,
     "UNIT_LIKE_10^-1": 4,
@@ -222,12 +222,12 @@
     "UNIT_LIKE_10^-3": 1
    },
    "PRETAX_INCOME/CUMULATIVE": {
-    "EXACT_0.5%": 15533,
-    "NO_FINAL": 12458,
-    "NO_PRELIM": 4539,
+    "EXACT_0.5%": 15544,
+    "NO_FINAL": 12466,
+    "NO_PRELIM": 4520,
     "WITHIN_5%": 199,
-    "FAR": 153,
-    "WITHIN_30%": 113,
+    "FAR": 155,
+    "WITHIN_30%": 111,
     "SCOPE_MISMATCH": 25,
     "SIGN_FLIP": 15,
     "UNIT_LIKE_10^2": 4,
@@ -238,14 +238,14 @@
     "ZERO": 1
    },
    "PRETAX_INCOME/PERIOD": {
-    "NO_FINAL": 16686,
-    "EXACT_0.5%": 12701,
-    "NO_PRELIM": 3683,
+    "NO_FINAL": 16742,
+    "EXACT_0.5%": 12730,
+    "NO_PRELIM": 3597,
     "WITHIN_5%": 176,
     "FAR": 114,
-    "WITHIN_30%": 83,
-    "SIGN_FLIP": 18,
+    "WITHIN_30%": 86,
     "SCOPE_MISMATCH": 17,
+    "SIGN_FLIP": 16,
     "UNIT_LIKE_10^-2": 3,
     "UNIT_LIKE_10^2": 2,
     "UNIT_LIKE_10^6": 1,
@@ -254,12 +254,12 @@
     "ZERO": 1
    },
    "REVENUE/CUMULATIVE": {
-    "EXACT_0.5%": 15939,
-    "NO_FINAL": 15186,
-    "NO_PRELIM": 3528,
-    "FAR": 148,
-    "WITHIN_30%": 83,
+    "EXACT_0.5%": 15951,
+    "NO_FINAL": 15259,
+    "NO_PRELIM": 3502,
+    "FAR": 112,
     "WITHIN_5%": 83,
+    "WITHIN_30%": 60,
     "SCOPE_MISMATCH": 23,
     "UNIT_LIKE_10^2": 4,
     "UNIT_LIKE_10^-2": 3,
@@ -269,12 +269,12 @@
     "UNIT_LIKE_10^-6": 1
    },
    "REVENUE/PERIOD": {
-    "NO_FINAL": 20367,
-    "EXACT_0.5%": 13095,
-    "NO_PRELIM": 5019,
-    "FAR": 135,
+    "NO_FINAL": 20522,
+    "EXACT_0.5%": 13125,
+    "NO_PRELIM": 4878,
+    "FAR": 92,
     "WITHIN_5%": 66,
-    "WITHIN_30%": 42,
+    "WITHIN_30%": 41,
     "SCOPE_MISMATCH": 17,
     "UNIT_LIKE_10^-2": 4,
     "ZERO": 1,
@@ -286,14 +286,14 @@
   },
   "current_vs_final": {
    "NET_INCOME/CUMULATIVE": {
-    "NO_FINAL": 13792,
-    "EXACT_0.5%": 13589,
+    "NO_FINAL": 13785,
+    "EXACT_0.5%": 13595,
     "NO_PRELIM": 5156,
-    "WITHIN_5%": 1316,
-    "WITHIN_30%": 742,
+    "WITHIN_5%": 1317,
+    "WITHIN_30%": 743,
     "FAR": 294,
     "SCOPE_MISMATCH": 58,
-    "SIGN_FLIP": 48,
+    "SIGN_FLIP": 47,
     "UNIT_LIKE_10^-2": 4,
     "UNIT_LIKE_10^-1": 3,
     "UNIT_LIKE_10^1": 2,
@@ -303,12 +303,12 @@
     "UNIT_LIKE_10^-6": 1
    },
    "NET_INCOME/PERIOD": {
-    "NO_FINAL": 18839,
-    "EXACT_0.5%": 11610,
+    "NO_FINAL": 18808,
+    "EXACT_0.5%": 11631,
     "NO_PRELIM": 6766,
-    "WITHIN_5%": 703,
-    "WITHIN_30%": 448,
-    "FAR": 216,
+    "WITHIN_5%": 707,
+    "WITHIN_30%": 455,
+    "FAR": 215,
     "SCOPE_MISMATCH": 35,
     "SIGN_FLIP": 30,
     "UNIT_LIKE_10^-2": 5,
@@ -320,12 +320,12 @@
     "UNIT_LIKE_10^1": 1
    },
    "OPERATING_INCOME/CUMULATIVE": {
-    "EXACT_0.5%": 15449,
-    "NO_FINAL": 14468,
+    "EXACT_0.5%": 15454,
+    "NO_FINAL": 14465,
     "NO_PRELIM": 3578,
-    "WITHIN_5%": 926,
-    "WITHIN_30%": 313,
-    "FAR": 182,
+    "WITHIN_5%": 930,
+    "WITHIN_30%": 311,
+    "FAR": 178,
     "SCOPE_MISMATCH": 50,
     "SIGN_FLIP": 23,
     "UNIT_LIKE_10^-2": 4,
@@ -336,12 +336,12 @@
     "UNIT_LIKE_10^-3": 1
    },
    "OPERATING_INCOME/PERIOD": {
-    "NO_FINAL": 19840,
-    "EXACT_0.5%": 12835,
+    "NO_FINAL": 19812,
+    "EXACT_0.5%": 12860,
     "NO_PRELIM": 5083,
-    "WITHIN_5%": 587,
-    "WITHIN_30%": 214,
-    "FAR": 120,
+    "WITHIN_5%": 592,
+    "WITHIN_30%": 213,
+    "FAR": 119,
     "SCOPE_MISMATCH": 28,
     "SIGN_FLIP": 21,
     "UNIT_LIKE_10^-2": 5,
@@ -352,8 +352,8 @@
     "UNIT_LIKE_10^-3": 1
    },
    "PRETAX_INCOME/CUMULATIVE": {
-    "EXACT_0.5%": 14286,
-    "NO_FINAL": 12666,
+    "EXACT_0.5%": 14293,
+    "NO_FINAL": 12659,
     "NO_PRELIM": 4118,
     "WITHIN_5%": 1108,
     "WITHIN_30%": 503,
@@ -368,11 +368,11 @@
     "ZERO": 1
    },
    "PRETAX_INCOME/PERIOD": {
-    "NO_FINAL": 16974,
-    "EXACT_0.5%": 12048,
+    "NO_FINAL": 16944,
+    "EXACT_0.5%": 12073,
     "NO_PRELIM": 3294,
-    "WITHIN_5%": 613,
-    "WITHIN_30%": 308,
+    "WITHIN_5%": 615,
+    "WITHIN_30%": 311,
     "FAR": 178,
     "SCOPE_MISMATCH": 38,
     "SIGN_FLIP": 25,
@@ -383,12 +383,12 @@
     "ZERO": 1
    },
    "REVENUE/CUMULATIVE": {
-    "EXACT_0.5%": 16027,
-    "NO_FINAL": 15471,
+    "EXACT_0.5%": 16032,
+    "NO_FINAL": 15525,
     "NO_PRELIM": 3013,
-    "WITHIN_5%": 239,
-    "FAR": 149,
-    "WITHIN_30%": 67,
+    "WITHIN_5%": 240,
+    "FAR": 110,
+    "WITHIN_30%": 46,
     "SCOPE_MISMATCH": 25,
     "UNIT_LIKE_10^-2": 4,
     "ZERO": 2,
@@ -398,11 +398,11 @@
     "UNIT_LIKE_10^-6": 1
    },
    "REVENUE/PERIOD": {
-    "NO_FINAL": 20797,
-    "EXACT_0.5%": 13094,
+    "NO_FINAL": 20814,
+    "EXACT_0.5%": 13119,
     "NO_PRELIM": 4477,
-    "WITHIN_5%": 183,
-    "FAR": 124,
+    "WITHIN_5%": 185,
+    "FAR": 80,
     "WITHIN_30%": 45,
     "SCOPE_MISMATCH": 20,
     "UNIT_LIKE_10^-2": 5,
@@ -415,65 +415,59 @@
   },
   "rates_by_basis": {
    "prior_year/inferred": {
-    "EXACT_0.5%": 96.38,
-    "WITHIN_5%": 1.31,
-    "FAR": 0.92,
-    "WITHIN_30%": 0.82,
-    "SCOPE_MISMATCH": 0.29,
-    "SIGN_FLIP": 0.12,
-    "UNIT_LIKE_10^-2": 0.09,
-    "UNIT_LIKE_10^6": 0.05,
-    "UNIT_LIKE_10^2": 0.02,
-    "ZERO": 0.01
+    "EXACT_0.5%": 92.83,
+    "FAR": 2.69,
+    "WITHIN_30%": 2.15,
+    "SIGN_FLIP": 1.25,
+    "SCOPE_MISMATCH": 0.72,
+    "WITHIN_5%": 0.36
    },
    "prior_year/monthly": {},
    "prior_year/parsed": {
-    "EXACT_0.5%": 97.3,
-    "WITHIN_5%": 1.05,
-    "FAR": 0.88,
-    "WITHIN_30%": 0.51,
-    "SCOPE_MISMATCH": 0.13,
+    "EXACT_0.5%": 97.27,
+    "WITHIN_5%": 1.09,
+    "FAR": 0.81,
+    "WITHIN_30%": 0.53,
+    "SCOPE_MISMATCH": 0.15,
     "SIGN_FLIP": 0.07,
+    "UNIT_LIKE_10^-2": 0.02,
     "UNIT_LIKE_10^2": 0.02,
     "UNIT_LIKE_10^-1": 0.01,
-    "UNIT_LIKE_10^-2": 0.01,
     "UNIT_LIKE_10^-3": 0.01,
+    "UNIT_LIKE_10^6": 0.01,
     "UNIT_LIKE_10^-6": 0.01,
     "UNIT_LIKE_10^1": 0.01,
     "ZERO": 0.0
    },
    "current/inferred": {
-    "EXACT_0.5%": 90.37,
-    "WITHIN_5%": 4.88,
-    "WITHIN_30%": 2.58,
-    "FAR": 1.55,
-    "SCOPE_MISMATCH": 0.3,
-    "SIGN_FLIP": 0.16,
-    "UNIT_LIKE_10^-2": 0.09,
-    "UNIT_LIKE_10^6": 0.04,
-    "UNIT_LIKE_10^1": 0.02,
-    "ZERO": 0.02
+    "EXACT_0.5%": 85.96,
+    "WITHIN_5%": 5.61,
+    "WITHIN_30%": 4.04,
+    "FAR": 2.98,
+    "SCOPE_MISMATCH": 0.88,
+    "SIGN_FLIP": 0.53
    },
    "current/monthly": {},
    "current/parsed": {
-    "EXACT_0.5%": 91.43,
-    "WITHIN_5%": 4.73,
-    "WITHIN_30%": 2.15,
-    "FAR": 1.23,
+    "EXACT_0.5%": 91.36,
+    "WITHIN_5%": 4.76,
+    "WITHIN_30%": 2.19,
+    "FAR": 1.19,
     "SCOPE_MISMATCH": 0.25,
-    "SIGN_FLIP": 0.16,
-    "UNIT_LIKE_10^-2": 0.02,
+    "SIGN_FLIP": 0.15,
+    "UNIT_LIKE_10^-2": 0.03,
     "UNIT_LIKE_10^2": 0.01,
     "UNIT_LIKE_10^-1": 0.01,
+    "UNIT_LIKE_10^6": 0.01,
     "UNIT_LIKE_10^-6": 0.01,
-    "UNIT_LIKE_10^-3": 0.0,
-    "ZERO": 0.0,
-    "UNIT_LIKE_10^1": 0.0
+    "ZERO": 0.01,
+    "UNIT_LIKE_10^1": 0.01,
+    "UNIT_LIKE_10^-3": 0.0
    }
   },
   "matched_rows": {
-   "prior_year": 118048,
-   "current": 119363
+   "prior_year": 118113,
+   "current": 119398
   },
   "unit_like_filings": {
    "SOME_CELLS": 32,
@@ -481,20 +475,20 @@
   },
   "far_diagnosis": {
    "counts": {
-    "prior_year/NOT_FOUND_ANYWHERE": 706,
-    "prior_year/basis_parsed": 881,
-    "prior_year/basis_inferred": 164,
-    "prior_year/PERIOD_OR_SCOPE_MISMATCH": 339,
-    "current/NOT_FOUND_ANYWHERE": 1297,
-    "current/basis_parsed": 1246,
-    "current/basis_inferred": 279,
-    "current/PERIOD_OR_SCOPE_MISMATCH": 228
+    "prior_year/NOT_FOUND_ANYWHERE": 640,
+    "prior_year/basis_parsed": 952,
+    "prior_year/PERIOD_OR_SCOPE_MISMATCH": 327,
+    "prior_year/basis_inferred": 15,
+    "current/NOT_FOUND_ANYWHERE": 1226,
+    "current/basis_parsed": 1419,
+    "current/PERIOD_OR_SCOPE_MISMATCH": 210,
+    "current/basis_inferred": 17
    },
    "mismatch_where": {
-    "다른 분기(같은 해 · 같은 기준)": 56,
-    "연결/별도 반대": 14,
-    "다른 해": 489,
-    "같은 키의 다른 열": 8
+    "다른 해": 468,
+    "다른 분기(같은 해 · 같은 기준)": 52,
+    "같은 키의 다른 열": 4,
+    "연결/별도 반대": 13
    }
   }
  },
@@ -521,5 +515,5 @@
    ]
   ]
  },
- "elapsed_sec": 18
+ "elapsed_sec": 110
 }

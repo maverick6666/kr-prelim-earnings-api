@@ -18,13 +18,18 @@ from prelim.checks import (
 from prelim.parse import (
     Amount,
     MetricRow,
+    PeriodInfo,
     column_role,
+    fill_year_from_receipt,
+    find_current_period,
     find_unit_override,
     normalize_annual,
     parse_amount,
     parse_change_and_pct,
     parse_html,
     period_from_label,
+    period_from_month_pair,
+    period_from_text,
     resolve_single,
 )
 from prelim.source import decode
@@ -116,11 +121,81 @@ def test_2010_combined_change_cells():
      ("당기실적 (2025년 상반기)", "HALF", 2025, 2, None), ("당기실적 (2015년 연간)", "ANNUAL", 2015, 4, None),
      ("당기실적 2025.01.01 ~ 2025.03.31", "QUARTER", 2025, 1, None), ("당기실적", "UNKNOWN", None, None, None),
      ("당기실적 (2023년)", "ANNUAL", 2023, 4, None), ("당기실적 (2023)", "ANNUAL", 2023, 4, None),
-     ("당기실적 (제59기)", "ANNUAL", None, 4, None), ("당기실적 ('23.4Q )", "QUARTER", 2023, 4, None)],
+     ("당기실적 (제59기)", "ANNUAL", None, 4, None), ("당기실적 ('23.4Q )", "QUARTER", 2023, 4, None),
+     # 실제 공시에서 놓치던 표기들
+     ("당기실적 ('21.1분기)", "QUARTER", 2021, 1, None), ("당기실적 (2016년 3Q)", "QUARTER", 2016, 3, None),
+     ("당기실적 (17년3Q)", "QUARTER", 2017, 3, None), ("당기실적 ('13 3Q)", "QUARTER", 2013, 3, None),
+     ("당기실적 (1Q24)", "QUARTER", 2024, 1, None), ("당기실적 ('25.Q1)", "QUARTER", 2025, 1, None),
+     ("당기실적 ('08.2/4 )", "QUARTER", 2008, 2, None), ("당기실적 (091Q)", "QUARTER", 2009, 1, None),
+     ("당기실적 (20193Q)", "QUARTER", 2019, 3, None), ("당기실적 (18.6월)", "MONTHLY", 2018, None, 6),
+     ("당기실적 (09.07.01~09.09.30)", "QUARTER", 2009, 3, None),
+     ("당기실적(2006.01.01~03.31)", "QUARTER", 2006, 1, None),
+     ("당기실적 (`08.1.1~`08.3.31 )", "QUARTER", 2008, 1, None),
+     ("당기실적 (2009.2.1.~2009.2.28)", "MONTHLY", 2009, None, 2),
+     ("당기실적 2019년 (1.1~12.31)", "ANNUAL", 2019, 4, None), ("당기실적 (21.01~21.03)", "QUARTER", 2021, 1, None),
+     ("당기실적 (13년4월-6월)", "QUARTER", 2013, 2, None), ("당기실적 (2015.04~06)", "QUARTER", 2015, 2, None),
+     ("당기실적 (FY2021)", "ANNUAL", 2021, 4, None), ("당기실적 (2007年)", "ANNUAL", 2007, 4, None),
+     ("당기실적 ('09 상반기)", "HALF", 2009, 2, None), ("당기(2003)실적", "ANNUAL", 2003, 4, None),
+     # 옛 판독은 범위의 첫 달을 월별로 읽었다
+     ("당기실적(2004년10월1일~12월31일 )", "QUARTER", 2004, 4, None),
+     ("당기실적 (2014년 01월~2014년 12월)", "ANNUAL", 2014, 4, None),
+     # 표준 기간이 아니면 정하지 않는다
+     ("당기실적 (2013년 3월~12월)", "UNKNOWN", 2013, None, None),
+     # 연도 없는 분기 · 기수(연도는 parse_html 이 접수일로 채움)
+     ("당기실적 (3분기)", "QUARTER", None, 3, None), ("당기실적 (2Q)", "QUARTER", None, 2, None),
+     ("당기실적 제54기반기", "HALF", None, 2, None), ("당기실적 (2009.03)", "UNKNOWN", None, None, None)],
 )
 def test_period_from_label(label, kind, year, quarter, month):
     p = period_from_label(label)
     assert (p.kind, p.year, p.quarter, p.month) == (kind, year, quarter, month)
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [("1. 실적내용 해당 기간 당 기 : 2012년 1월 1일부터 2012년 3월 31일까지 전 기 : 2011년 10월 1일부터",
+      ("2012-01-01", "2012-03-31")),
+     ("해당 기간 당 기 : 2010년 01월01일 ~ 2010년 03월31일(10년1분기) 전 기 : 2009년 10월01일 ~ 2009년 12월31일",
+      ("2010-01-01", "2010-03-31")),
+     # 당기 칸이 비어 있으면 뒤의 전기 기간을 당기로 읽지 않는다
+     ("구분 당기실적 (-) 전기실적 2025.10.01 ~ 2025.12.31", None)],
+)
+def test_current_period_from_body_text(text, expected):
+    assert find_current_period(text) == expected
+
+
+def test_period_from_body_field_without_dates():
+    p = period_from_text("1. 실적 내용 해당 기간 당 기: 2008년 1분기 전 기: 2007년 4분기")
+    assert (p.kind, p.year, p.quarter, p.source) == ("QUARTER", 2008, 1, "text")
+    # 쌍점 없는 설명 문장 속 연 · 월은 기간으로 읽지 않는다
+    assert period_from_text("당기 실적은 2023년 3월 합병 영향으로 늘었다").kind == "UNKNOWN"
+
+
+@pytest.mark.parametrize(
+    ("current", "prior", "expected"),
+    [("당기실적 (2009.03)", "전기실적 (2009.02)", ("MONTHLY", 2009, None, 3)),
+     ("당기실적 (2009.03)", "전기실적 (2008.12)", ("QUARTER", 2009, 1, None)),
+     ("당기실적 ('13.01)", "전기실적 ('12.12)", ("MONTHLY", 2013, None, 1)),
+     ("당기실적 (2009.03)", None, ("UNKNOWN", None, None, None)),
+     ("당기실적 (2009.03)", "전년동기 (2008.03)", ("UNKNOWN", None, None, None))],
+)
+def test_bare_year_month_needs_prior_label(current, prior, expected):
+    p = period_from_month_pair(current, prior)
+    assert (p.kind, p.year, p.quarter, p.month) == expected
+
+
+@pytest.mark.parametrize(
+    ("period", "receipt", "year"),
+    [(PeriodInfo("QUARTER", None, quarter=3), "20231114", 2023),
+     (PeriodInfo("QUARTER", None, quarter=4), "20240131", 2023),
+     (PeriodInfo("MONTHLY", None, month=12), "20090115", 2008),
+     (PeriodInfo("HALF", None, quarter=2), "20150728", 2015),
+     (PeriodInfo("ANNUAL", None, quarter=4), "20240205", 2023),
+     (PeriodInfo("ANNUAL", None, quarter=4), "20240820", None)],
+)
+def test_year_filled_from_receipt_date(period, receipt, year):
+    filled = fill_year_from_receipt(period, receipt)
+    assert filled.year == year
+    assert filled.source.endswith("+receipt") == (year is not None)
 
 
 def test_annual_filing_moves_prior_period_to_prior_year():
