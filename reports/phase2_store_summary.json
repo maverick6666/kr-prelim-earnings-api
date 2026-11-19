@@ -1,0 +1,39 @@
+{
+ "filings": 34687,
+ "chains": 32767,
+ "chains_with_corrections": 1697,
+ "corrections_without_document": 2118,
+ "corrections_not_linked": 318,
+ "chains_latest_not_parsed": 1928,
+ "time_match": {
+  "exact": 33805,
+  "none": 847,
+  "ambiguous": 35
+ },
+ "time_category": {
+  "장중": 18377,
+  "장 마감 뒤": 13436,
+  "장 전": 2012,
+  "휴장일": 15
+ },
+ "period_key_unknown": 9808,
+ "with_consensus": 266,
+ "surprise_label": {
+  "어닝 서프라이즈": 92,
+  "어닝 쇼크": 74,
+  "부합": 41,
+  "상회": 20,
+  "하회": 9
+ },
+ "metric_rows": 293083,
+ "invariant_violations": {
+  "metric_without_evidence": 0,
+  "chain_without_exactly_one_latest": 0,
+  "chain_with_changing_first_publish_time": 0,
+  "version_published_before_first": 0,
+  "consensus_not_before_first_publication": 0,
+  "surprise_on_later_version": 0,
+  "amount_without_krw": 0
+ },
+ "elapsed_sec": 20
+}
