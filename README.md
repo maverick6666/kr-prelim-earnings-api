@@ -151,32 +151,18 @@ GET /v1/companies/005930/earnings/2024Q2
 
 ```mermaid
 flowchart TB
-    subgraph SRC["원자료 (저장소에 없음)"]
-        direction LR
-        A["DART 잠정실적 원문<br/>HTML · ZIP"]
-        K["KIND 공시 목록<br/>분 단위 시각"]
-        F["OpenDART<br/>확정 재무"]
-        N["기사 속<br/>증권사 예상치"]
-    end
+    A["DART 잠정실적 원문<br/>HTML · ZIP"] --> PA["parse.py · 표 격자 → 열 역할 · 항목 · 단위 · 기간"]
+    PA --> C["checks.py · 반올림 범위 검증 · 원문 오기 후보"]
+    F["OpenDART 확정 재무"] -. "정확도 ② 대조" .-> C
+    C --> V["store.py · 버전 묶음(원 공시 · 재공시 · 정정)"]
+    K["KIND 공시 목록<br/>분 단위 시각"] --> V
+    V --> SU["깜짝 판정 · 첫 버전만 · 그보다 먼저 나온 기사만"]
+    N["기사 속<br/>증권사 예상치"] --> SU
+    SU --> INV["불변조건 7개 검사 · 하나라도 어기면 빌드 실패"]
+    INV --> API["api.py · FastAPI + 데모 화면"]
 
-    subgraph P1["1단계 · 판독과 정확도"]
-        direction LR
-        S["source.py<br/>인코딩 판별"] --> PA["parse.py<br/>표 격자 · 열 역할<br/>단위 · 기간"] --> C["checks.py<br/>반올림 범위 검증<br/>원문 오기 후보"]
-    end
-
-    subgraph P2["2단계 · 저장소"]
-        direction LR
-        V["버전 묶음<br/>원 공시 · 재공시 · 정정"] --> T["최초 공개 시각"] --> SU["깜짝 판정<br/>첫 버전 · 미래 정보 금지"] --> INV["불변조건 7개 검사"]
-    end
-
-    API["api.py · FastAPI<br/>+ 데모 화면"]
-
-    A --> S
-    C --> V
-    K --> T
-    N --> SU
-    F -. "정확도 ② 대조" .-> C
-    INV --> API
+    classDef src fill:#f4f3ef,stroke:#b8b5ac,color:#3d3c39
+    class A,F,K,N src
 ```
 
 ```text
