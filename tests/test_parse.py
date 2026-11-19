@@ -20,6 +20,7 @@ from prelim.parse import (
     MetricRow,
     column_role,
     find_unit_override,
+    normalize_annual,
     parse_amount,
     parse_change_and_pct,
     parse_html,
@@ -113,11 +114,22 @@ def test_2010_combined_change_cells():
     [("당기실적 ('26.1Q)", "QUARTER", 2026, 1, None), ("당기실적 (16년 4월)", "MONTHLY", 2016, None, 4),
      ("당기실적 2016년3분기", "QUARTER", 2016, 3, None), ("당기실적 (2016년 1/4분기)", "QUARTER", 2016, 1, None),
      ("당기실적 (2025년 상반기)", "HALF", 2025, 2, None), ("당기실적 (2015년 연간)", "ANNUAL", 2015, 4, None),
-     ("당기실적 2025.01.01 ~ 2025.03.31", "QUARTER", 2025, 1, None), ("당기실적", "UNKNOWN", None, None, None)],
+     ("당기실적 2025.01.01 ~ 2025.03.31", "QUARTER", 2025, 1, None), ("당기실적", "UNKNOWN", None, None, None),
+     ("당기실적 (2023년)", "ANNUAL", 2023, 4, None), ("당기실적 (2023)", "ANNUAL", 2023, 4, None),
+     ("당기실적 (제59기)", "ANNUAL", None, 4, None), ("당기실적 ('23.4Q )", "QUARTER", 2023, 4, None)],
 )
 def test_period_from_label(label, kind, year, quarter, month):
     p = period_from_label(label)
     assert (p.kind, p.year, p.quarter, p.month) == (kind, year, quarter, month)
+
+
+def test_annual_filing_moves_prior_period_to_prior_year():
+    rows = [MetricRow(metric="REVENUE", metric_label="매출액", span="PERIOD", current=parse_amount("382,911"),
+                      prior_period=parse_amount("355,390"), qoq_pct=parse_amount("7.7"))]
+    assert normalize_annual(rows) == 1
+    r = rows[0]
+    assert r.prior_year.value == 355390 and r.yoy_pct.value == 7.7 and r.prior_period is None
+    assert check_row(r).yoy_pct == PASS
 
 
 def test_unit_override_in_notes():
@@ -168,6 +180,16 @@ def test_source_typo_dot_used_as_thousands_separator():
                     prior_year=parse_amount("13,232"), qoq_pct=parse_amount("4.8"), yoy_pct=parse_amount("30.2"))
     chk = check_row(row)
     assert chk.verdict == SOURCE_TYPO and chk.fix == ("current", "17.227", 17227.0)
+
+
+def test_format_typo_without_growth_rate_to_check():
+    # 누계 행이라 증감률이 없어도, 다른 금액이 정수인 표에서 '102.834' 는 102,834 의 표기 오기로 본다
+    row = MetricRow(metric="NET_INCOME", metric_label="당기순이익", span="CUMULATIVE",
+                    current=parse_amount("102.834"), prior_year=parse_amount("48,519"))
+    chk = check_row(row, unit_multiplier=1_000_000)
+    assert chk.verdict == SOURCE_TYPO and chk.fix == ("current", "102.834", 102834.0)
+    # 조원 표는 소수를 실제로 쓰므로 오기로 보지 않는다
+    assert check_row(row, unit_multiplier=1_000_000_000_000).verdict == NA
 
 
 def test_source_typo_comma_used_as_decimal_in_pct():

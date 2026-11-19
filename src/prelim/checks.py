@@ -134,14 +134,42 @@ def typo_candidates(a: Amount | None, is_pct: bool) -> list[Amount]:
     return out
 
 
-def check_row(row: MetricRow) -> RowCheck:
+AMOUNT_FIELDS = ("current", "prior_year", "prior_period")
+
+
+def format_typo(row: MetricRow, unit_multiplier: int | None) -> tuple[str, str, float] | None:
+    """증감률로 확인할 수 없는 칸의 표기 오기: 다른 금액은 정수인데 한 칸만 '102.834' 처럼 소수 셋째 자리까지.
+
+    백만원 · 억원 표에서 금액을 소수 셋째 자리까지 적는 일은 없어서, 점을 쉼표 대신 쓴 것으로 본다.
+    조원 · 십억원 표는 소수를 실제로 쓰므로 보지 않는다.
+    """
+    if unit_multiplier is None or unit_multiplier > 100_000_000:
+        return None
+    amounts = {n: getattr(row, n) for n in AMOUNT_FIELDS if getattr(row, n) and getattr(row, n).value is not None}
+    for name, a in amounts.items():
+        others = [o for k, o in amounts.items() if k != name]
+        raw = squash(a.raw)
+        if others and all(o.decimals == 0 for o in others) and a.decimals == 3 and _DOT_AS_THOUSANDS.match(raw):
+            return name, a.raw, (-1.0 if a.value < 0 else 1.0) * float(re.sub(r"\D", "", raw))
+    return None
+
+
+def check_row(row: MetricRow, unit_multiplier: int | None = None) -> RowCheck:
     """증감률 · 증감액으로 검증하고, 실패하면 흔한 원문 오기를 고쳐 다시 맞춰 본다.
 
     고친 값으로 모든 검사가 통과하면 SOURCE_TYPO(원문 오기 의심)로 표시하고 고친 값을 남긴다.
+    증감률이 없어 검사할 수 없는 칸도, 표기 형식만으로 분명한 오기는 같은 방식으로 표시한다(format_typo).
     원래 값은 그대로 두고(덮어쓰지 않음), 고친 값은 후보로만 제시한다.
     """
     base = _checks(row)
     if base.verdict != FAIL:
+        fix = format_typo(row, unit_multiplier)
+        if fix is not None:
+            name, _, value = fix
+            trial = _checks(replace(row, **{name: Amount(getattr(row, name).raw, value, 0)}))
+            if trial.verdict != FAIL:
+                trial.fix = fix
+                return trial
         return base
     fields = ("current", "prior_year", "prior_period", "yoy_pct", "qoq_pct", "yoy_change", "qoq_change")
     for name in fields:

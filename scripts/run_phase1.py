@@ -62,7 +62,7 @@ def parse_one(rcept_no: str) -> tuple[dict, list[dict]]:
     }
     rows = []
     for m in p.metrics:
-        chk = check_row(m)
+        chk = check_row(m, p.unit_multiplier)
         rows.append({
             "rcept_no": rcept_no, "metric": m.metric, "metric_label": m.metric_label, "span": m.span,
             "current": _val(m.current), "prior_period": _val(m.prior_period), "prior_year": _val(m.prior_year),
@@ -140,8 +140,43 @@ def ratio_class(prelim: float | None, final: float | None) -> str:
     return "FAR"
 
 
-def final_crosscheck(metrics: pd.DataFrame, filings: pd.DataFrame, inv: pd.DataFrame) -> pd.DataFrame:
-    fin = load_final_financials()
+def diagnose_far(x: pd.DataFrame, fin: pd.DataFrame) -> dict:
+    """확정치와 크게 다른 행을 진단한다.
+
+    같은 회사 · 같은 항목의 다른 분기 · 연도 · 연결/별도 확정치 중 0.5% 안에서 맞는 것이 있는지 본다.
+
+    있으면 기간이나 기준을 잘못 맞춘 것(PERIOD_OR_SCOPE_MISMATCH), 어디에도 없으면 원문 숫자나 확정 재무 쪽 문제
+    (NOT_FOUND_ANYWHERE)로 본다. 어떤 키에서 맞았는지도 몇 가지 센다.
+    """
+    pool: dict[tuple[str, str], list[tuple[tuple, float]]] = {}
+    for row in fin.itertuples(index=False):
+        for col in ("thstrm_amount", "thstrm_add_amount", "frmtrm_amount", "frmtrm_add_amount"):
+            v = getattr(row, col)
+            if v is not None and not (isinstance(v, float) and math.isnan(v)) and v != 0:
+                pool.setdefault((row.corp_code, row.metric), []).append(
+                    ((row.bsns_year, row.reprt_code, row.fs_div, col), float(v)))
+    result = Counter()
+    where = Counter()
+    for what, col in (("prior_year", "cls_prior_year"), ("current", "cls_current")):
+        far = x[x[col] == "FAR"]
+        for row in far.itertuples(index=False):
+            value = getattr(row, f"prelim_{what}_krw")
+            hits = [k for k, v in pool.get((row.corp_code, row.metric), []) if abs(value / v - 1) <= 0.005]
+            if hits:
+                result[f"{what}/PERIOD_OR_SCOPE_MISMATCH"] += 1
+                year, reprt, fs, _ = hits[0]
+                same_scope = fs == row.fs_div
+                same_year = year == row.bsns_year
+                where["다른 분기(같은 해 · 같은 기준)" if same_year and same_scope and reprt != row.reprt_code else
+                      "다른 해" if not same_year else "연결/별도 반대" if not same_scope else "같은 키의 다른 열"] += 1
+            else:
+                result[f"{what}/NOT_FOUND_ANYWHERE"] += 1
+            result[f"{what}/basis_{row.period_basis}"] += 1
+    return {"counts": dict(result), "mismatch_where": dict(where)}
+
+
+def final_crosscheck(metrics: pd.DataFrame, filings: pd.DataFrame, inv: pd.DataFrame,
+                     fin: pd.DataFrame) -> pd.DataFrame:
     f = filings.merge(inv[["rcept_no", "corp_code", "receipt_date"]], on="rcept_no")
     keys = [report_key(k, y, q, rd) for k, y, q, rd in
             zip(f["period_kind"], f["period_year"], f["period_quarter"], f["receipt_date"], strict=False)]
@@ -161,8 +196,10 @@ def final_crosscheck(metrics: pd.DataFrame, filings: pd.DataFrame, inv: pd.DataF
     annual = m["reprt_code"] == "11011"
     cumulative = m["span"] == "CUMULATIVE"
     use_period_value = ~cumulative | annual | (m["reprt_code"] == "11013")
-    # 4분기 3개월 값은 사업보고서에 없고, 반기 공시의 '당해' 는 6개월이라 분기 값과 맞출 수 없다
-    blank = (annual & ~cumulative) | (m["period_kind"].eq("HALF") & ~cumulative)
+    # 4분기 3개월 값은 사업보고서에 없고, 반기 공시의 '당해' 는 6개월이라 분기 값과 맞출 수 없다.
+    # 연간 공시의 '당해' 는 1년치라 사업보고서 연간 값과 바로 맞춘다.
+    is_annual_filing = m["period_kind"].eq("ANNUAL")
+    blank = (annual & ~cumulative & ~is_annual_filing) | (m["period_kind"].eq("HALF") & ~cumulative)
 
     def finals(prefix: str) -> tuple[pd.Series, pd.Series]:
         cur = m[prefix + "thstrm_amount"].where(use_period_value, m[prefix + "thstrm_add_amount"]).mask(blank)
@@ -172,8 +209,9 @@ def final_crosscheck(metrics: pd.DataFrame, filings: pd.DataFrame, inv: pd.DataF
     m["final_current"], m["final_prior_year"] = finals("")
     m["alt_final_current"], m["alt_final_prior_year"] = finals("alt_")
     mult = m["unit_multiplier"]
-    m["prelim_current_krw"] = m["current"] * mult
-    m["prelim_prior_year_krw"] = m["prior_year"] * mult
+    # 원문 오기로 표시된 칸은 고친 값으로 대조한다(원래 값은 parsed_metrics 에 그대로 남아 있다)
+    m["prelim_current_krw"] = m["current"].where(m["fix_field"] != "current", m["fix_value"]) * mult
+    m["prelim_prior_year_krw"] = m["prior_year"].where(m["fix_field"] != "prior_year", m["fix_value"]) * mult
     for what in ("prior_year", "current"):
         prelim, final, alt_final = m[f"prelim_{what}_krw"], m[f"final_{what}"], m[f"alt_final_{what}"]
         cls = [ratio_class(a, b) for a, b in zip(prelim, final, strict=False)]
@@ -215,7 +253,9 @@ def gold_compare(metrics: pd.DataFrame, filings: pd.DataFrame) -> dict:
             if isinstance(row, pd.DataFrame):
                 row = row.iloc[0]
             ok_cur = _same_krw(row["current"], mult[rcept], pair.get("actual"))
-            ok_prev = _same_krw(row["prior_year"], mult[rcept], pair.get("expected"))
+            # 정답도 우리도 비교값이 없으면(예: 첫 결산) 일치로 본다
+            ok_prev = _same_krw(row["prior_year"], mult[rcept], pair.get("expected")) or (
+                _missing(pair.get("expected")) and _missing(row["prior_year"]))
             verdict = "BOTH_MATCH" if ok_cur and ok_prev else ("CURRENT_ONLY" if ok_cur else "MISMATCH")
             results[verdict] += 1
             if verdict != "BOTH_MATCH":
@@ -289,7 +329,8 @@ def main() -> None:
                                          "any_fail": int(any_fail.sum())}
 
     print("확정 재무 대조 중…", flush=True)
-    x = final_crosscheck(metrics_df, filings_df[filings_df["status"] == "OK"], inv)
+    fin = load_final_financials()
+    x = final_crosscheck(metrics_df, filings_df[filings_df["status"] == "OK"], inv, fin)
     x.drop(columns=["evidence"]).to_parquet(BUILD / "final_crosscheck.parquet", index=False)
     unmatched = ("NO_FINAL", "NO_PRELIM")
     summary["final_crosscheck"] = {
@@ -306,6 +347,15 @@ def main() -> None:
         "matched_rows": {what: int((~x[col].isin(unmatched)).sum())
                          for what, col in (("prior_year", "cls_prior_year"), ("current", "cls_current"))},
     }
+    # 10의 거듭제곱 배 차이: 공시 전체가 같은 배수면 표 단위 오기 · 확정 재무 단위 문제, 일부 칸이면 자릿수 오기
+    unit_rows = x[x["cls_prior_year"].str.startswith("UNIT") | x["cls_current"].str.startswith("UNIT")]
+    kinds = Counter()
+    for r in unit_rows["rcept_no"].unique():
+        rows = x[x["rcept_no"] == r]
+        classes = (set(rows["cls_prior_year"]) | set(rows["cls_current"])) - set(unmatched)
+        kinds["WHOLE_FILING_SAME_FACTOR" if len(classes) == 1 else "SOME_CELLS"] += 1
+    summary["final_crosscheck"]["unit_like_filings"] = dict(kinds)
+    summary["final_crosscheck"]["far_diagnosis"] = diagnose_far(x, fin)
 
     summary["proxy_gold_revenue"] = gold_compare(metrics_df, filings_df)
     summary["elapsed_sec"] = round(time.time() - t0)

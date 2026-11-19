@@ -409,7 +409,29 @@ def period_from_label(label: str) -> PeriodInfo:
         if kind == "QUARTER":
             return PeriodInfo(kind, year, quarter=int(m.group(2)), source="label")
         return PeriodInfo(kind, year, quarter=2 if kind == "HALF" else 4, source="label")
+    # 분기 · 월 표시 없이 연도나 기수만 있으면 연간 실적: '(2023년)' · '(2023)' · '(제59기)'
+    core = re.sub(r"당기\s*(실적)?|[()\[\]\s]", "", label)
+    m = re.fullmatch(r"'?(\d{2}|\d{4})년?도?", core)
+    if m:
+        return PeriodInfo("ANNUAL", _year(m.group(1)), quarter=4, source="label")
+    if re.fullmatch(r"제\d+기", core):
+        return PeriodInfo("ANNUAL", None, quarter=4, source="label")
     return PeriodInfo()
+
+
+def normalize_annual(rows: list[MetricRow]) -> int:
+    """연간 실적 공시는 '전기' 가 곧 전년이다. 전년동기 칸이 비어 있으면 전기 값을 전년 비교값으로 옮긴다.
+
+    옮긴 행 수를 돌려준다. 4분기 공시(당기 = 4분기 3개월)는 전기가 3분기라 옮기지 않는다(연간일 때만 호출).
+    """
+    moved = 0
+    for r in rows:
+        if (r.prior_year is None or r.prior_year.value is None) and r.prior_period and r.prior_period.value is not None:
+            r.prior_year, r.yoy_pct, r.yoy_change, r.yoy_turn = r.prior_period, r.qoq_pct, r.qoq_change, r.qoq_turn
+            r.prior_period = r.qoq_pct = r.qoq_change = None
+            r.qoq_turn = None
+            moved += 1
+    return moved
 
 
 def find_current_period(text: str) -> tuple[str, str] | None:
@@ -525,6 +547,8 @@ def parse_html(rcept_no: str, html: str, encoding: str = "") -> ParsedFiling:
         mrow.yoy_change, mrow.yoy_pct = resolve_single(mrow.current, mrow.prior_year, mrow.yoy_change, mrow.yoy_pct)
         out.metrics.append(mrow)
 
+    if out.period.kind == "ANNUAL" and (moved := normalize_annual(out.metrics)):
+        out.notes.append(f"연간 공시: 전기 = 전년으로 {moved}행 옮김")
     if not out.metrics and out.status == "OK":
         out.status = "NO_RESULTS_TABLE"
     return out
