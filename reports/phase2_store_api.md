@@ -71,7 +71,7 @@ DART 접수번호와 KIND 접수번호는 체계가 달라, 종목코드 · 날�
 | `GET /v1/filings?date=&limit=&offset=` | 최근 잠정실적 목록(공개 시각 순). 매출 · 영업이익 · 순이익과 전년 대비, 깜짝 판정 |
 | `GET /v1/filings/{rcept_no}` | 공시 한 건: 항목별 숫자(원 단위) · 공시에 적힌 증감률과 다시 계산한 증감률 · 검증 결과 · 원문 오기 후보 · 근거 · 버전 목록 · DART 원문 링크 |
 | `GET /v1/companies/{stock_code}/earnings` | 한 회사의 기간별 현재 값(최근 순, 연결 우선) |
-| `GET /v1/companies/{stock_code}/earnings/{period}` | 기간 하나: `OK` · `CORRECTION_NOT_REFLECTED`(경고 포함) · `NOT_YET`(마지막 공시 기간보다 뒤, 오류 아님) · `NOT_FOUND`(그 앞인데 공시를 못 찾음) · `NUMBERS_NOT_AVAILABLE` |
+| `GET /v1/companies/{stock_code}/earnings/{period}` | 기간 하나: `OK` · `CORRECTION_NOT_REFLECTED`(경고 포함) · `NOT_YET`(자료 끝 기준 아직 나올 때가 안 됨, 오류 아님) · `NOT_FOUND`(지난 기간인데 공시 없음 — 공시를 멈춘 회사면 마지막 기간을 함께) · `NUMBERS_NOT_AVAILABLE` |
 | `GET /v1/search?q=` | 회사명 일부 · 종목코드로 찾기 |
 | `GET /` | 데모 화면 |
 
