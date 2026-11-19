@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 
-from prelim.api import Store, create_app
+from prelim.api import Store, create_app, period_order
 
 NA = float("nan")
 
@@ -86,6 +86,16 @@ def test_period_not_yet_disclosed_is_not_an_error(client):
                         "latest_available_period": "2024Q2"}
 
 
+def test_past_period_without_filing_is_not_called_not_yet(client):
+    body = client.get("/v1/companies/005930/earnings/2023Q4").json()
+    assert body["status"] == "NOT_FOUND" and body["latest_available_period"] == "2024Q2"
+
+
+def test_period_order_follows_period_end_not_text():
+    keys = ["2024Q2", "2024M12", "2024FY", "2024Q4", "2024M05", "2023FY"]
+    assert sorted(keys, key=period_order) == ["2023FY", "2024M05", "2024Q2", "2024M12", "2024Q4", "2024FY"]
+
+
 def test_company_earnings_lists_latest_periods_first(client):
     body = client.get("/v1/companies/005930/earnings").json()
     assert [p["period_key"] for p in body["periods"]] == ["2024Q2", "2024Q1"]
@@ -95,6 +105,13 @@ def test_company_earnings_lists_latest_periods_first(client):
 def test_feed_is_ordered_by_publish_time_and_skips_unparsed(client):
     items = client.get("/v1/filings?limit=10").json()["items"]
     assert [i["rcept_no"] for i in items] == ["20240731800039", "20240705800058", "20240405800040"]
+
+
+def test_search_and_demo_page(client):
+    items = client.get("/v1/search?q=삼성").json()["items"]
+    assert items == [{"stock_code": "005930", "corp_name": "삼성전자", "latest_rcept_no": "20240731800039"}]
+    page = client.get("/")
+    assert page.status_code == 200 and "잠정실적 속보" in page.text
 
 
 @pytest.mark.parametrize(("path", "code"), [

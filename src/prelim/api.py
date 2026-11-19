@@ -1,10 +1,14 @@
 """잠정실적 API.
 
+    GET /                                        데모 화면
     GET /health
+    GET /v1/search?q=                            회사명 · 종목코드 찾기
     GET /v1/filings                              최근 잠정실적 (최초 공개 시각 순)
     GET /v1/filings/{rcept_no}                   공시 한 건: 숫자 · 증감 · 검증 · 근거 · 깜짝 판정 · 버전
     GET /v1/companies/{stock_code}/earnings      한 회사의 기간별 현재 값
     GET /v1/companies/{stock_code}/earnings/{period}   기간 하나(예: 2024Q2 · 2023FY · 2016M04)
+        status: OK · CORRECTION_NOT_REFLECTED(원문 없는 정정공시가 있음) · NUMBERS_NOT_AVAILABLE
+                · NOT_YET(마지막 공시 기간보다 뒤) · NOT_FOUND(그 앞인데 공시를 못 찾음)
 
 데이터는 scripts/build_store.py 가 만든 build/store/*.parquet 를 읽는다(PRELIM_STORE_DIR 로 바꿀 수 있음).
 실행: PYTHONPATH=src uvicorn prelim.api:app --port 8100
@@ -15,12 +19,15 @@ from __future__ import annotations
 import math
 import os
 import re
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.responses import FileResponse
 
+WEB_DIR = Path(__file__).resolve().parent / "web"
 STORE_DIR = Path(os.environ.get("PRELIM_STORE_DIR", Path(__file__).resolve().parents[2] / "build" / "store"))
 PERIOD_RE = re.compile(r"^\d{4}(Q[1-4]|FY|M(0[1-9]|1[0-2]))$")
 METRIC_NAMES = {
@@ -123,9 +130,8 @@ class Store:
 
     def summary(self, f: pd.Series) -> dict:
         out = _row(f, ["rcept_no", "corp_name", "stock_code", "statement_scope", "period_key", "period_kind",
-                       "version_kind", "version_no", "versions_in_chain", "first_published_at", "published_at",
-                       "time_cat", "document_parsed"])
-        out["period_inferred"] = out.get("period_key") == "UNKNOWN"
+                       "period_source", "version_kind", "version_no", "versions_in_chain", "first_published_at",
+                       "published_at", "time_cat", "document_parsed"])
         out["headline"] = self.headline(f["rcept_no"])
         out["surprise"] = self.surprise(f)
         out["dart_url"] = DART_URL.format(f["rcept_no"])
@@ -140,15 +146,48 @@ class Store:
         return out
 
 
+_KIND_ORDER = {"M": 0, "Q": 1, "FY": 2}
+
+
+def period_order(key: str) -> tuple[int, int, int]:
+    """기간 키를 기간이 끝나는 때 순서로: 2024M05 < 2024Q2 < 2024M07 < 2024Q4 < 2024FY."""
+    year = int(key[:4])
+    if key.endswith("FY"):
+        return year, 12, _KIND_ORDER["FY"]
+    if key[4] == "M":
+        return year, int(key[5:]), _KIND_ORDER["M"]
+    return year, 3 * int(key[5]), _KIND_ORDER["Q"]
+
+
 def create_app(store: Store | None = None) -> FastAPI:
-    app = FastAPI(title="잠정실적 속보 API", version="0.2.0",
+    state: dict[str, Store] = {} if store is None else {"store": store}
+
+    @asynccontextmanager
+    async def lifespan(_app: FastAPI):
+        db()  # 서버가 뜰 때 한 번 읽어 둔다(첫 요청이 수 초 걸리지 않게)
+        yield
+
+    app = FastAPI(title="잠정실적 속보 API", version="0.2.0", lifespan=lifespan,
                   description="DART 잠정실적 공시를 숫자 · 증감 · 깜짝 여부 · 근거로 정리해 준다.")
-    state: dict[str, Store] = {}
 
     def db() -> Store:
         if "store" not in state:
-            state["store"] = store if store is not None else Store.load()
+            state["store"] = Store.load()
         return state["store"]
+
+    @app.get("/", include_in_schema=False)
+    def demo_page() -> FileResponse:
+        return FileResponse(WEB_DIR / "index.html")
+
+    @app.get("/v1/search")
+    def search(q: str = Query(..., min_length=1, max_length=40), limit: int = Query(10, ge=1, le=30)) -> dict:
+        """회사명 일부나 종목코드로 찾는다. 회사마다 가장 최근 잠정실적 공시 하나를 함께 준다."""
+        f = db().filings
+        f = f[f["document_parsed"] & ~f["is_subsidiary_major_matter"].astype(bool)]
+        hit = f[(f["stock_code"] == q) | f["corp_name"].str.contains(q, regex=False, na=False)]
+        latest = hit.sort_values("rcept_no").groupby("stock_code").tail(1).sort_values("rcept_no", ascending=False)
+        return {"items": [{"stock_code": r["stock_code"], "corp_name": r["corp_name"],
+                           "latest_rcept_no": r["rcept_no"]} for _, r in latest.head(limit).iterrows()]}
 
     @app.get("/health")
     def health() -> dict:
@@ -157,9 +196,12 @@ def create_app(store: Store | None = None) -> FastAPI:
 
     @app.get("/v1/filings")
     def list_filings(date: str | None = Query(None, description="최초 공개일 YYYY-MM-DD"),
+                     exclude_monthly: bool = Query(False, description="월별 매출 공시 빼기"),
                      limit: int = Query(20, ge=1, le=200), offset: int = Query(0, ge=0)) -> dict:
         f = db().filings
         f = f[f["document_parsed"] & ~f["is_subsidiary_major_matter"].astype(bool)]
+        if exclude_monthly:
+            f = f[f["period_kind"] != "MONTHLY"]
         if date:
             if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", date):
                 raise HTTPException(422, "date 는 YYYY-MM-DD")
@@ -217,7 +259,7 @@ def create_app(store: Store | None = None) -> FastAPI:
             raise HTTPException(404, "잠정실적 공시를 낸 적이 없는 종목코드")
         f = f[f["period_key"] != "UNKNOWN"]
         periods = []
-        for _period, g in sorted(f.groupby("period_key"), key=lambda t: t[0], reverse=True)[:limit]:
+        for _period, g in sorted(f.groupby("period_key"), key=lambda t: period_order(t[0]), reverse=True)[:limit]:
             g = g if scope else pick_scope(g)
             latest = g.sort_values("rcept_no").iloc[-1]
             chain = g[g["chain_id"] == latest["chain_id"]]
@@ -241,10 +283,17 @@ def create_app(store: Store | None = None) -> FastAPI:
             raise HTTPException(404, "잠정실적 공시를 낸 적이 없는 종목코드")
         g = f[f["period_key"] == period]
         if g.empty:
-            known = sorted(f.loc[f["period_key"] != "UNKNOWN", "period_key"].unique())
-            # 경계 시나리오: 아직 공시하지 않은 기간은 오류가 아니라 '아직 없음'
-            return {"status": "NOT_YET", "stock_code": stock_code, "period": period,
-                    "latest_available_period": known[-1] if known else None}
+            known = sorted(f.loc[f["period_key"] != "UNKNOWN", "period_key"].unique(), key=period_order)
+            latest = known[-1] if known else None
+            out = {"stock_code": stock_code, "period": period, "latest_available_period": latest}
+            # 경계 시나리오: 마지막 공시 기간보다 뒤면 '아직 없음'(오류 아님), 앞이면 '그 기간 공시를 못 찾음'
+            if latest is None or period_order(period) > period_order(latest):
+                return {"status": "NOT_YET"} | out
+            unknown = int((f["period_key"] == "UNKNOWN").sum())
+            out["note"] = "이 기간의 잠정실적 공시를 찾지 못했다(잠정실적을 내지 않은 기간일 수 있다)."
+            if unknown:
+                out["note"] += f" 이 회사에는 기간 표시를 읽지 못한 공시가 {unknown}건 있다."
+            return {"status": "NOT_FOUND"} | out
         g = g if scope else pick_scope(g)
         chain_id = g.sort_values("rcept_no").iloc[-1]["chain_id"]
         out = period_view(g[g["chain_id"] == chain_id])
