@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 
-from prelim.api import Store, create_app, period_order
+from prelim.api import Store, create_app, not_yet, period_end, period_order
 
 NA = float("nan")
 
@@ -83,7 +83,7 @@ def test_period_not_yet_disclosed_is_not_an_error(client):
     r = client.get("/v1/companies/005930/earnings/2026Q4")
     assert r.status_code == 200
     assert r.json() == {"status": "NOT_YET", "stock_code": "005930", "period": "2026Q4",
-                        "latest_available_period": "2024Q2"}
+                        "latest_available_period": "2024Q2", "data_end": "2024-07-31"}
 
 
 def test_past_period_without_filing_is_not_called_not_yet(client):
@@ -124,3 +124,20 @@ def test_search_and_demo_page(client):
 ])
 def test_bad_inputs(client, path, code):
     assert client.get(path).status_code == code
+
+
+def test_not_yet_depends_on_data_end_not_on_the_company():
+    from datetime import date
+
+    assert period_end("2024Q2") == date(2024, 6, 30) and period_end("2016M02") == date(2016, 2, 29)
+    assert period_end("2023FY") == date(2023, 12, 31)
+    data_end = date(2024, 7, 31)
+    assert not_yet("2024Q2", data_end) and not_yet("2024Q3", data_end)  # 끝난 지 두 달이 안 됐거나 아직 안 끝남
+    assert not not_yet("2024Q1", data_end)  # 지난 기간: 공시가 없으면 '아직' 이 아니라 '없음'
+
+
+def test_company_that_stopped_filing_gets_not_found_with_reason(client):
+    body = client.get("/v1/companies/005930/earnings/2024Q1").json()
+    assert body["status"] == "OK"  # 있는 기간은 그대로
+    stale = client.get("/v1/companies/005930/earnings/2023Q3").json()
+    assert stale["status"] == "NOT_FOUND" and "찾지 못했다" in stale["note"]

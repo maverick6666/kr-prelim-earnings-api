@@ -8,7 +8,7 @@
     GET /v1/companies/{stock_code}/earnings      한 회사의 기간별 현재 값
     GET /v1/companies/{stock_code}/earnings/{period}   기간 하나(예: 2024Q2 · 2023FY · 2016M04)
         status: OK · CORRECTION_NOT_REFLECTED(원문 없는 정정공시가 있음) · NUMBERS_NOT_AVAILABLE
-                · NOT_YET(마지막 공시 기간보다 뒤) · NOT_FOUND(그 앞인데 공시를 못 찾음)
+                · NOT_YET(자료 끝 기준 아직 나올 때가 안 됨) · NOT_FOUND(그 기간 공시를 못 찾음 — 이유를 note 에)
 
 데이터는 scripts/build_store.py 가 만든 build/store/*.parquet 를 읽는다(PRELIM_STORE_DIR 로 바꿀 수 있음).
 실행: PYTHONPATH=src uvicorn prelim.api:app --port 8100
@@ -16,11 +16,13 @@
 
 from __future__ import annotations
 
+import calendar
 import math
 import os
 import re
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
+from datetime import date, timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -68,6 +70,8 @@ class Store:
     def __post_init__(self) -> None:
         self.filings = self.filings.set_index("rcept_no", drop=False).rename_axis(None)
         self._metrics_by_filing = {k: g for k, g in self.metrics.groupby("rcept_no")}
+        # 자료 끝 = 가장 늦게 접수된 공시의 날짜(NOT_YET 판단 기준)
+        self.data_end = pd.to_datetime(self.filings["rcept_dt"], format="%Y%m%d").max().date()
 
     # ── 응답 조각 ──
     def surprise(self, f: pd.Series) -> dict | None:
@@ -157,6 +161,21 @@ def period_order(key: str) -> tuple[int, int, int]:
     if key[4] == "M":
         return year, int(key[5:]), _KIND_ORDER["M"]
     return year, 3 * int(key[5]), _KIND_ORDER["Q"]
+
+
+FILING_LAG_DAYS = 60  # 잠정실적은 보통 기간이 끝나고 두 달 안에 나온다
+
+
+def period_end(key: str) -> date:
+    """기간이 끝나는 날: 2024Q2 → 2024-06-30, 2023FY → 2023-12-31, 2016M04 → 2016-04-30."""
+    year = int(key[:4])
+    month = 12 if key.endswith("FY") else int(key[5:]) if key[4] == "M" else 3 * int(key[5])
+    return date(year, month, calendar.monthrange(year, month)[1])
+
+
+def not_yet(period: str, data_end: date, lag_days: int = FILING_LAG_DAYS) -> bool:
+    """자료 끝 기준으로 그 기간의 잠정실적이 아직 나올 때가 안 됐나(기간 끝 + lag 가 자료 끝보다 뒤)."""
+    return period_end(period) + timedelta(days=lag_days) > data_end
 
 
 def create_app(store: Store | None = None) -> FastAPI:
@@ -286,11 +305,18 @@ def create_app(store: Store | None = None) -> FastAPI:
             known = sorted(f.loc[f["period_key"] != "UNKNOWN", "period_key"].unique(), key=period_order)
             latest = known[-1] if known else None
             out = {"stock_code": stock_code, "period": period, "latest_available_period": latest}
-            # 경계 시나리오: 마지막 공시 기간보다 뒤면 '아직 없음'(오류 아님), 앞이면 '그 기간 공시를 못 찾음'
-            if latest is None or period_order(period) > period_order(latest):
+            # 경계 시나리오: 자료 끝 기준으로 아직 나올 때가 안 된 기간이면 '아직 없음'(오류 아님).
+            # 회사의 마지막 공시 기간만 보면, 공시를 멈춘 회사(상장폐지 등)의 지난 기간까지 '아직' 이 된다.
+            data_end = db().data_end
+            out["data_end"] = data_end.isoformat()
+            if not_yet(period, data_end):
                 return {"status": "NOT_YET"} | out
             unknown = int((f["period_key"] == "UNKNOWN").sum())
-            out["note"] = "이 기간의 잠정실적 공시를 찾지 못했다(잠정실적을 내지 않은 기간일 수 있다)."
+            if latest is not None and period_order(period) > period_order(latest):
+                out["note"] = (f"이 회사의 마지막 잠정실적은 {latest} 이다. 그 뒤로 잠정실적을 내지 않았다"
+                               "(상장폐지 · 공시 중단 · 잠정실적 대신 정기보고서만 냄 등).")
+            else:
+                out["note"] = "이 기간의 잠정실적 공시를 찾지 못했다(잠정실적을 내지 않은 기간일 수 있다)."
             if unknown:
                 out["note"] += f" 이 회사에는 기간 표시를 읽지 못한 공시가 {unknown}건 있다."
             return {"status": "NOT_FOUND"} | out
