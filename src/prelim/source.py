@@ -2,7 +2,7 @@
 
 공시 목록(inventory)과 원문 ZIP 을 접수번호(rcept_no)로 잇고, 원문 인코딩을 판별한다.
 원문은 2008년 무렵부터 같은 표 양식을 쓰지만, 인코딩은 해마다 UTF-8 과 CP949(EUC-KR)가 섞여 있다.
-데이터 위치는 환경변수 PRELIM_DATA_ROOT 로 바꿀 수 있다(기본: 개발 PC 의 데이터 폴더).
+데이터 위치는 환경변수 PRELIM_DATA_ROOT 로 정한다(없으면 저장소 안의 data/, 깃에는 올리지 않음).
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pandas as pd
 
-DATA_ROOT = Path(os.environ.get("PRELIM_DATA_ROOT", r"F:\quant\data"))
+DATA_ROOT = Path(os.environ.get("PRELIM_DATA_ROOT", Path(__file__).resolve().parents[2] / "data"))
 INVENTORY_PATH = Path(
     "derived/kr_prelim_earnings/kr_dart_preliminary_earnings_inventory_v1_20260719/"
     "preliminary_earnings_inventory.parquet"

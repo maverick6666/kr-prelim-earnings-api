@@ -227,3 +227,12 @@ PYTHONPATH=src uvicorn prelim.api:app --port 8100                            # h
 ```
 
 원자료(DART 공시 원문 · OpenDART 재무 · KIND 공시 목록 · 기사 예상치)는 이 저장소에 들어 있지 않습니다. 테스트는 원문 3건(`tests/fixtures`)과 합성 데이터로 돌아갑니다.
+`PRELIM_DATA_ROOT`(기본: 저장소 안 `data/`, 깃 제외) 아래에 이렇게 둡니다.
+
+```text
+derived/kr_prelim_earnings/.../preliminary_earnings_inventory.parquet   DART 잠정실적 공시 목록
+raw/dart_docs/prelim_earnings/cache/c/<앞 2자리>/<접수번호>/document.zip  공시 원문
+raw/opendart/dart_kr.sqlite                                              확정 재무(fin_rows) — 정확도 ②
+derived/kr_earnings_events/disclosures.parquet                           KIND 공시 시각
+derived/consensus_kr/consensus_checked.parquet                           기사 속 예상치
+```
