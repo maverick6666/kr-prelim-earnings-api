@@ -1,0 +1,587 @@
+{
+ "inventory_filings": 47636,
+ "with_document": 39761,
+ "monthly_reports_excluded": 0,
+ "parsed_target": 39761,
+ "status_by_era": {
+  "2002-2007": {
+   "OK": 6206,
+   "NO_RESULTS_TABLE": 847,
+   "NO_UNIT": 127
+  },
+  "2008-2026": {
+   "OK": 32569,
+   "CORRUPTED_SOURCE": 7,
+   "NO_RESULTS_TABLE": 5
+  }
+ },
+ "encoding": {
+  "cp949": 30365,
+  "utf-8": 9396
+ },
+ "unit": {
+  "백만원": 35603,
+  "억원": 2460,
+  "천원": 547,
+  "조원": 103,
+  "십억원": 52,
+  "XX원": 10,
+  "원": 9,
+  "천톤": 5,
+  "백만원원": 5,
+  "백만원2.": 1
+ },
+ "metric_coverage_2008plus": {
+  "REVENUE": 0.9514,
+  "OPERATING_INCOME": 0.9349,
+  "PRETAX_INCOME": 0.9009,
+  "NET_INCOME": 0.8884,
+  "NET_INCOME_CONTROLLING": 0.4633
+ },
+ "self_check_2008plus": {
+  "NET_INCOME/CUMULATIVE": {
+   "PASS": 24474,
+   "NA": 7901,
+   "FAIL": 122,
+   "SOURCE_TYPO": 31,
+   "NEAR": 22,
+   "PASS_CONVENTION": 19
+  },
+  "NET_INCOME/PERIOD": {
+   "PASS": 26986,
+   "NA": 5287,
+   "FAIL": 229,
+   "SOURCE_TYPO": 36,
+   "NEAR": 20,
+   "PASS_CONVENTION": 11
+  },
+  "NET_INCOME_CONTROLLING/CUMULATIVE": {
+   "PASS": 12788,
+   "NA": 3386,
+   "FAIL": 69,
+   "SOURCE_TYPO": 15,
+   "NEAR": 15,
+   "PASS_CONVENTION": 9
+  },
+  "NET_INCOME_CONTROLLING/PERIOD": {
+   "PASS": 14028,
+   "NA": 2164,
+   "FAIL": 96,
+   "SOURCE_TYPO": 25,
+   "NEAR": 11,
+   "PASS_CONVENTION": 5
+  },
+  "OPERATING_INCOME/CUMULATIVE": {
+   "PASS": 26432,
+   "NA": 5905,
+   "FAIL": 149,
+   "SOURCE_TYPO": 35,
+   "NEAR": 27,
+   "PASS_CONVENTION": 21
+  },
+  "OPERATING_INCOME/PERIOD": {
+   "PASS": 28997,
+   "NA": 3284,
+   "FAIL": 203,
+   "SOURCE_TYPO": 60,
+   "NEAR": 16,
+   "PASS_CONVENTION": 9
+  },
+  "PRETAX_INCOME/CUMULATIVE": {
+   "PASS": 24930,
+   "NA": 7384,
+   "FAIL": 132,
+   "SOURCE_TYPO": 35,
+   "NEAR": 25,
+   "PASS_CONVENTION": 23
+  },
+  "PRETAX_INCOME/PERIOD": {
+   "PASS": 27461,
+   "NA": 4801,
+   "FAIL": 189,
+   "SOURCE_TYPO": 47,
+   "PASS_CONVENTION": 16,
+   "NEAR": 15
+  },
+  "REVENUE/CUMULATIVE": {
+   "PASS": 28467,
+   "NA": 3828,
+   "FAIL": 157,
+   "SOURCE_TYPO": 47,
+   "PASS_CONVENTION": 40,
+   "NEAR": 30
+  },
+  "REVENUE/PERIOD": {
+   "PASS": 30461,
+   "NA": 1749,
+   "FAIL": 268,
+   "SOURCE_TYPO": 67,
+   "NEAR": 13,
+   "PASS_CONVENTION": 11
+  }
+ },
+ "self_check_by_type_2008plus": {
+  "chk_yoy_pct": {
+   "PASS": 223892,
+   "NA": 66943,
+   "PASS_CONVENTION": 1042,
+   "FAIL": 728,
+   "NEAR": 478
+  },
+  "chk_qoq_pct": {
+   "NA": 174891,
+   "PASS": 116907,
+   "PASS_CONVENTION": 578,
+   "FAIL": 437,
+   "NEAR": 270
+  },
+  "chk_yoy_change": {
+   "NA": 198143,
+   "PASS": 94342,
+   "FAIL": 516,
+   "PASS_CONVENTION": 82
+  },
+  "chk_qoq_change": {
+   "NA": 244894,
+   "PASS": 47884,
+   "FAIL": 248,
+   "PASS_CONVENTION": 57
+  }
+ },
+ "filings_core3_all_pass": {
+  "n": 32569,
+  "all_pass": 26194,
+  "any_fail": 570
+ },
+ "final_crosscheck": {
+  "prior_year_vs_final": {
+   "NET_INCOME/CUMULATIVE": {
+    "EXACT_0.5%": 15350,
+    "NO_FINAL": 13469,
+    "NO_PRELIM": 5735,
+    "WITHIN_5%": 161,
+    "FAR": 132,
+    "WITHIN_30%": 105,
+    "SCOPE_MISMATCH": 32,
+    "SIGN_FLIP": 10,
+    "UNIT_LIKE_10^2": 4,
+    "UNIT_LIKE_10^-2": 3,
+    "UNIT_LIKE_10^-3": 3,
+    "UNIT_LIKE_10^-1": 2,
+    "UNIT_LIKE_10^6": 1,
+    "UNIT_LIKE_10^-6": 1,
+    "UNIT_LIKE_10^1": 1
+   },
+   "NET_INCOME/PERIOD": {
+    "NO_FINAL": 18150,
+    "EXACT_0.5%": 12243,
+    "NO_PRELIM": 7887,
+    "WITHIN_5%": 182,
+    "FAR": 85,
+    "WITHIN_30%": 68,
+    "SCOPE_MISMATCH": 23,
+    "SIGN_FLIP": 12,
+    "UNIT_LIKE_10^-2": 3,
+    "UNIT_LIKE_10^-3": 2,
+    "UNIT_LIKE_10^6": 1,
+    "UNIT_LIKE_10^-6": 1,
+    "UNIT_LIKE_10^2": 1
+   },
+   "OPERATING_INCOME/CUMULATIVE": {
+    "EXACT_0.5%": 16183,
+    "NO_FINAL": 14053,
+    "NO_PRELIM": 4270,
+    "WITHIN_5%": 199,
+    "FAR": 147,
+    "WITHIN_30%": 92,
+    "SCOPE_MISMATCH": 24,
+    "SIGN_FLIP": 16,
+    "UNIT_LIKE_10^-1": 5,
+    "UNIT_LIKE_10^2": 4,
+    "UNIT_LIKE_10^-2": 3,
+    "UNIT_LIKE_10^1": 2,
+    "UNIT_LIKE_10^-3": 2,
+    "UNIT_LIKE_10^6": 1,
+    "UNIT_LIKE_10^-6": 1
+   },
+   "OPERATING_INCOME/PERIOD": {
+    "NO_FINAL": 19041,
+    "EXACT_0.5%": 12940,
+    "NO_PRELIM": 6343,
+    "WITHIN_5%": 200,
+    "FAR": 107,
+    "WITHIN_30%": 63,
+    "SCOPE_MISMATCH": 16,
+    "SIGN_FLIP": 15,
+    "UNIT_LIKE_10^-1": 4,
+    "UNIT_LIKE_10^-2": 3,
+    "UNIT_LIKE_10^2": 2,
+    "UNIT_LIKE_10^-3": 2,
+    "UNIT_LIKE_10^1": 2,
+    "UNIT_LIKE_10^6": 1,
+    "UNIT_LIKE_10^-6": 1
+   },
+   "PRETAX_INCOME/CUMULATIVE": {
+    "EXACT_0.5%": 15489,
+    "NO_FINAL": 12378,
+    "NO_PRELIM": 4663,
+    "WITHIN_5%": 199,
+    "FAR": 153,
+    "WITHIN_30%": 113,
+    "SCOPE_MISMATCH": 25,
+    "SIGN_FLIP": 15,
+    "UNIT_LIKE_10^2": 4,
+    "UNIT_LIKE_10^-2": 3,
+    "UNIT_LIKE_10^6": 1,
+    "UNIT_LIKE_10^-6": 1,
+    "UNIT_LIKE_10^-3": 1,
+    "ZERO": 1
+   },
+   "PRETAX_INCOME/PERIOD": {
+    "NO_FINAL": 16429,
+    "EXACT_0.5%": 12398,
+    "NO_PRELIM": 4270,
+    "WITHIN_5%": 168,
+    "FAR": 100,
+    "WITHIN_30%": 75,
+    "SIGN_FLIP": 18,
+    "SCOPE_MISMATCH": 17,
+    "UNIT_LIKE_10^-3": 4,
+    "UNIT_LIKE_10^-2": 3,
+    "UNIT_LIKE_10^2": 2,
+    "UNIT_LIKE_10^6": 1,
+    "UNIT_LIKE_10^-6": 1,
+    "ZERO": 1
+   },
+   "REVENUE/CUMULATIVE": {
+    "EXACT_0.5%": 15900,
+    "NO_FINAL": 15052,
+    "NO_PRELIM": 3699,
+    "FAR": 148,
+    "WITHIN_30%": 83,
+    "WITHIN_5%": 83,
+    "SCOPE_MISMATCH": 23,
+    "UNIT_LIKE_10^2": 4,
+    "UNIT_LIKE_10^-3": 4,
+    "UNIT_LIKE_10^-2": 3,
+    "ZERO": 2,
+    "UNIT_LIKE_10^6": 1,
+    "UNIT_LIKE_10^-6": 1
+   },
+   "REVENUE/PERIOD": {
+    "NO_FINAL": 19980,
+    "EXACT_0.5%": 12768,
+    "NO_PRELIM": 5750,
+    "FAR": 125,
+    "WITHIN_5%": 63,
+    "WITHIN_30%": 38,
+    "SCOPE_MISMATCH": 17,
+    "UNIT_LIKE_10^-2": 3,
+    "UNIT_LIKE_10^-3": 2,
+    "ZERO": 1,
+    "UNIT_LIKE_10^6": 1,
+    "UNIT_LIKE_10^-6": 1,
+    "UNIT_LIKE_10^2": 1
+   }
+  },
+  "current_vs_final": {
+   "NET_INCOME/CUMULATIVE": {
+    "NO_FINAL": 13792,
+    "EXACT_0.5%": 13586,
+    "NO_PRELIM": 5156,
+    "WITHIN_5%": 1316,
+    "WITHIN_30%": 741,
+    "FAR": 295,
+    "SCOPE_MISMATCH": 58,
+    "SIGN_FLIP": 48,
+    "UNIT_LIKE_10^-2": 4,
+    "UNIT_LIKE_10^-3": 3,
+    "UNIT_LIKE_10^-1": 3,
+    "UNIT_LIKE_10^1": 2,
+    "UNIT_LIKE_10^2": 2,
+    "UNIT_LIKE_10^6": 1,
+    "ZERO": 1,
+    "UNIT_LIKE_10^-6": 1
+   },
+   "NET_INCOME/PERIOD": {
+    "NO_FINAL": 19171,
+    "EXACT_0.5%": 11423,
+    "NO_PRELIM": 6766,
+    "WITHIN_5%": 628,
+    "WITHIN_30%": 403,
+    "FAR": 193,
+    "SCOPE_MISMATCH": 32,
+    "SIGN_FLIP": 30,
+    "UNIT_LIKE_10^-2": 4,
+    "UNIT_LIKE_10^-3": 2,
+    "UNIT_LIKE_10^6": 1,
+    "UNIT_LIKE_10^-1": 1,
+    "ZERO": 1,
+    "UNIT_LIKE_10^-6": 1,
+    "UNIT_LIKE_10^2": 1,
+    "UNIT_LIKE_10^1": 1
+   },
+   "OPERATING_INCOME/CUMULATIVE": {
+    "EXACT_0.5%": 15446,
+    "NO_FINAL": 14468,
+    "NO_PRELIM": 3578,
+    "WITHIN_5%": 926,
+    "WITHIN_30%": 313,
+    "FAR": 182,
+    "SCOPE_MISMATCH": 50,
+    "SIGN_FLIP": 23,
+    "UNIT_LIKE_10^-2": 4,
+    "UNIT_LIKE_10^-3": 4,
+    "UNIT_LIKE_10^2": 3,
+    "UNIT_LIKE_10^-1": 3,
+    "UNIT_LIKE_10^6": 1,
+    "UNIT_LIKE_10^-6": 1
+   },
+   "OPERATING_INCOME/PERIOD": {
+    "NO_FINAL": 20191,
+    "EXACT_0.5%": 12570,
+    "NO_PRELIM": 5083,
+    "WITHIN_5%": 537,
+    "WITHIN_30%": 196,
+    "FAR": 105,
+    "SCOPE_MISMATCH": 27,
+    "SIGN_FLIP": 20,
+    "UNIT_LIKE_10^-2": 4,
+    "UNIT_LIKE_10^2": 2,
+    "UNIT_LIKE_10^-1": 2,
+    "UNIT_LIKE_10^6": 1,
+    "UNIT_LIKE_10^-6": 1,
+    "UNIT_LIKE_10^-3": 1
+   },
+   "PRETAX_INCOME/CUMULATIVE": {
+    "EXACT_0.5%": 14283,
+    "NO_FINAL": 12666,
+    "NO_PRELIM": 4118,
+    "WITHIN_5%": 1108,
+    "WITHIN_30%": 503,
+    "FAR": 262,
+    "SCOPE_MISMATCH": 51,
+    "SIGN_FLIP": 40,
+    "UNIT_LIKE_10^-2": 4,
+    "UNIT_LIKE_10^-3": 3,
+    "UNIT_LIKE_10^1": 3,
+    "UNIT_LIKE_10^2": 2,
+    "UNIT_LIKE_10^6": 1,
+    "UNIT_LIKE_10^-6": 1,
+    "ZERO": 1
+   },
+   "PRETAX_INCOME/PERIOD": {
+    "NO_FINAL": 17306,
+    "EXACT_0.5%": 11813,
+    "NO_PRELIM": 3294,
+    "WITHIN_5%": 573,
+    "WITHIN_30%": 276,
+    "FAR": 157,
+    "SCOPE_MISMATCH": 34,
+    "SIGN_FLIP": 24,
+    "UNIT_LIKE_10^-2": 4,
+    "UNIT_LIKE_10^-3": 2,
+    "UNIT_LIKE_10^6": 1,
+    "UNIT_LIKE_10^-6": 1,
+    "UNIT_LIKE_10^2": 1,
+    "ZERO": 1
+   },
+   "REVENUE/CUMULATIVE": {
+    "EXACT_0.5%": 16025,
+    "NO_FINAL": 15471,
+    "NO_PRELIM": 3013,
+    "WITHIN_5%": 239,
+    "FAR": 149,
+    "WITHIN_30%": 67,
+    "SCOPE_MISMATCH": 25,
+    "UNIT_LIKE_10^-3": 4,
+    "UNIT_LIKE_10^-2": 4,
+    "ZERO": 2,
+    "UNIT_LIKE_10^2": 2,
+    "UNIT_LIKE_10^6": 1,
+    "UNIT_LIKE_10^-6": 1
+   },
+   "REVENUE/PERIOD": {
+    "NO_FINAL": 21144,
+    "EXACT_0.5%": 12769,
+    "NO_PRELIM": 4477,
+    "WITHIN_5%": 177,
+    "FAR": 113,
+    "WITHIN_30%": 41,
+    "SCOPE_MISMATCH": 20,
+    "UNIT_LIKE_10^-2": 4,
+    "ZERO": 1,
+    "UNIT_LIKE_10^6": 1,
+    "UNIT_LIKE_10^-6": 1,
+    "UNIT_LIKE_10^2": 1,
+    "UNIT_LIKE_10^-3": 1
+   }
+  },
+  "rates_by_basis": {
+   "prior_year/inferred": {
+    "EXACT_0.5%": 96.37,
+    "WITHIN_5%": 1.31,
+    "FAR": 0.93,
+    "WITHIN_30%": 0.82,
+    "SCOPE_MISMATCH": 0.29,
+    "SIGN_FLIP": 0.12,
+    "UNIT_LIKE_10^-2": 0.09,
+    "UNIT_LIKE_10^6": 0.05,
+    "UNIT_LIKE_10^2": 0.02,
+    "ZERO": 0.01
+   },
+   "prior_year/monthly": {},
+   "prior_year/parsed": {
+    "EXACT_0.5%": 97.36,
+    "WITHIN_5%": 1.04,
+    "FAR": 0.84,
+    "WITHIN_30%": 0.5,
+    "SCOPE_MISMATCH": 0.13,
+    "SIGN_FLIP": 0.07,
+    "UNIT_LIKE_10^-3": 0.02,
+    "UNIT_LIKE_10^2": 0.02,
+    "UNIT_LIKE_10^-1": 0.01,
+    "UNIT_LIKE_10^-6": 0.01,
+    "UNIT_LIKE_10^-2": 0.01,
+    "UNIT_LIKE_10^1": 0.01,
+    "ZERO": 0.0
+   },
+   "current/inferred": {
+    "EXACT_0.5%": 90.28,
+    "WITHIN_5%": 4.92,
+    "WITHIN_30%": 2.62,
+    "FAR": 1.55,
+    "SCOPE_MISMATCH": 0.31,
+    "SIGN_FLIP": 0.15,
+    "UNIT_LIKE_10^-2": 0.09,
+    "UNIT_LIKE_10^6": 0.04,
+    "UNIT_LIKE_10^1": 0.02,
+    "ZERO": 0.02
+   },
+   "current/monthly": {},
+   "current/parsed": {
+    "EXACT_0.5%": 91.67,
+    "WITHIN_5%": 4.62,
+    "WITHIN_30%": 2.07,
+    "FAR": 1.18,
+    "SCOPE_MISMATCH": 0.24,
+    "SIGN_FLIP": 0.16,
+    "UNIT_LIKE_10^-3": 0.02,
+    "UNIT_LIKE_10^-2": 0.02,
+    "UNIT_LIKE_10^2": 0.01,
+    "UNIT_LIKE_10^-1": 0.01,
+    "UNIT_LIKE_10^-6": 0.01,
+    "ZERO": 0.0,
+    "UNIT_LIKE_10^1": 0.0
+   }
+  },
+  "matched_rows": {
+   "prior_year": 116526,
+   "current": 118001
+  }
+ },
+ "proxy_gold_revenue": {
+  "counts": {
+   "BOTH_MATCH": 438,
+   "CURRENT_ONLY": 19
+  },
+  "misses": [
+   [
+    "20240213801189",
+    "PERIOD",
+    "CURRENT_ONLY"
+   ],
+   [
+    "20240131900792",
+    "PERIOD",
+    "CURRENT_ONLY"
+   ],
+   [
+    "20240131900792",
+    "CUMULATIVE",
+    "CURRENT_ONLY"
+   ],
+   [
+    "20240206900997",
+    "PERIOD",
+    "CURRENT_ONLY"
+   ],
+   [
+    "20240206900997",
+    "CUMULATIVE",
+    "CURRENT_ONLY"
+   ],
+   [
+    "20240207800607",
+    "PERIOD",
+    "CURRENT_ONLY"
+   ],
+   [
+    "20240207800259",
+    "PERIOD",
+    "CURRENT_ONLY"
+   ],
+   [
+    "20240214900999",
+    "PERIOD",
+    "CURRENT_ONLY"
+   ],
+   [
+    "20240206800872",
+    "PERIOD",
+    "CURRENT_ONLY"
+   ],
+   [
+    "20240208800547",
+    "PERIOD",
+    "CURRENT_ONLY"
+   ],
+   [
+    "20240206800399",
+    "PERIOD",
+    "CURRENT_ONLY"
+   ],
+   [
+    "20240215800665",
+    "PERIOD",
+    "CURRENT_ONLY"
+   ],
+   [
+    "20240130800696",
+    "CUMULATIVE",
+    "CURRENT_ONLY"
+   ],
+   [
+    "20240206900841",
+    "PERIOD",
+    "CURRENT_ONLY"
+   ],
+   [
+    "20240130800115",
+    "PERIOD",
+    "CURRENT_ONLY"
+   ],
+   [
+    "20240207901348",
+    "PERIOD",
+    "CURRENT_ONLY"
+   ],
+   [
+    "20240214900901",
+    "PERIOD",
+    "CURRENT_ONLY"
+   ],
+   [
+    "20240130800721",
+    "PERIOD",
+    "CURRENT_ONLY"
+   ],
+   [
+    "20240206800307",
+    "PERIOD",
+    "CURRENT_ONLY"
+   ]
+  ]
+ },
+ "elapsed_sec": 35
+}

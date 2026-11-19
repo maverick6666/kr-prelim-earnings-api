@@ -1,0 +1,24 @@
+# 큰 결과표 · 실행 기록 (다시 만들 수 있음)
+build/
+build_run.log
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# 환경변수 · 비밀값
+.env
+.env.*
+!.env.example
+
+# OS · IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
